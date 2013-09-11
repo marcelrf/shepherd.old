@@ -1,0 +1,33 @@
+<%- model_class = Observation -%>
+<div class="page-header">
+  <h1><%=t '.title', :default => model_class.model_name.human.pluralize.titleize %></h1>
+</div>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th><%= model_class.human_attribute_name(:metric) %></th>
+      <th><%= model_class.human_attribute_name(:divergence) %></th>
+      <th><%= model_class.human_attribute_name(:endurance) %></th>
+      <th><%= model_class.human_attribute_name(:start) %></th>
+      <th><%= model_class.human_attribute_name(:end) %></th>
+      <th><%= model_class.human_attribute_name(:observed_at) %></th>
+      <th><%=t '.actions', :default => t("helpers.actions") %></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @observations.each do |observation| %>
+      <tr>
+        <td><%= observation.metric.name %></td>
+        <td><%= (observation.divergence > 0 ? '+' : '') + observation.divergence.round(2).to_s %></td>
+        <td><%= endurance(observation.start, observation.end) %></td>
+        <td><%= observation.start %></td>
+        <td><%= observation.end %></td>
+        <td><%= observation.updated_at %></td>
+        <td>
+          <%= link_to t('.show', :default => t("helpers.links.show")),
+                      observation_path(observation), :class => 'btn btn-mini' %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

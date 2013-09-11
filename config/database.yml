@@ -1,0 +1,27 @@
+
+development:
+  adapter: mysql2
+  encoding: utf8
+  database: shepherd_development
+  pool: 5
+  username: shepherd
+  password: shepherd
+  socket: /var/run/mysqld/mysqld.sock
+
+test:
+  adapter: mysql2
+  encoding: utf8
+  database: shepherd_test
+  pool: 5
+  username: shepherd
+  password: shepherd
+  socket: /var/run/mysqld/mysqld.sock
+
+production:
+  adapter: mysql2
+  encoding: utf8
+  database: shepherd_production
+  pool: 5
+  username: shepherd
+  password: shepherd
+  socket: /var/run/mysqld/mysqld.sock
