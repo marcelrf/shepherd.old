@@ -1,0 +1,24 @@
+
+default_short_range:
+  sources: librato
+  periods: hour
+  history: false
+  workers: 10
+
+default_long_range:
+  sources: librato
+  periods: day week month
+  history: false
+  workers: 1
+
+history_short_range:
+  sources: librato
+  periods: hour
+  history: true
+  workers: 1
+
+history_long_range:
+  sources: librato
+  periods: day week month
+  history: true
+  workers: 1
