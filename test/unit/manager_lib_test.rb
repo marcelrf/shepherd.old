@@ -5,7 +5,7 @@ class ManagerLibTest < ActiveSupport::TestCase
 
   def clear_redis
     $redis.flushall
-  end  
+  end
 
   def get_new_check(metric, period)
     last_check = metric.send("last_#{period}_check")
