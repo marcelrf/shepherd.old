@@ -46,11 +46,10 @@ module WorkerLib
 
   def execute_check(check_json)
     check = json_to_check(check_json)
-    source_info = check['metric'].source_info
-    source_data = get_source_data(source_info, check['period'])
+    source_data = get_source_data(check['metric'], check['start'], check['period'])
     analysis = get_bootstrapping_analysis(source_data)
     $redis.multi do
-      $redis.hset('observations', analysis) if analysis.divergence.abs > 1
+      $redis.hset('observations', analysis) if analysis['divergence'].abs > 1
       $redis.sadd('done_checks', check_json)
     end
   end
