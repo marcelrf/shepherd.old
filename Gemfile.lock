@@ -142,6 +142,7 @@ GEM
     ref (1.0.5)
     responders (0.9.3)
       railties (~> 3.1)
+    rspec-mocks (2.14.3)
     sass (3.2.9)
     sass-rails (3.2.6)
       railties (~> 3.2.0)
@@ -190,6 +191,7 @@ DEPENDENCIES
   mysql2
   rails (= 3.2.13)
   redis
+  rspec-mocks
   sass-rails
   therubyracer
   twitter-bootstrap-rails
