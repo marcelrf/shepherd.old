@@ -1,6 +1,8 @@
 class ManagerLibTest < ActiveSupport::TestCase
   include ManagerLib
 
+  @@TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ%z"
+
   setup :clear_redis
 
   def clear_redis

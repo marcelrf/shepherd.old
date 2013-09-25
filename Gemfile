@@ -12,6 +12,7 @@ gem 'daemons-rails'
 gem 'validates_timeliness'
 gem 'highcharts-rails'
 gem 'redis'
+gem 'rspec-mocks'
 
 group :assets do
     gem 'twitter-bootstrap-rails'
