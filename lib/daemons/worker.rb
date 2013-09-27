@@ -7,9 +7,6 @@ root = File.dirname(root) until File.exists?(File.join(root, 'config'))
 Dir.chdir(root)
 require File.join(root, "config", "environment")
 
-# load main library
-include WorkerLib
-
 # globals
 @@threads = {}
 
@@ -20,14 +17,15 @@ Signal.trap("TERM") do
 end
 
 # start threads
+worker = Worker.new
 Rails.logger.info "[#{Time.now.utc}] WORKER: Summoned."
-queue_workers = get_queue_workers
+queue_workers = worker.get_queue_workers
 queue_workers.each do |queue, workers|
   workers.times do
     thread = Thread.new {
       loop do
         Rails.logger.info "Worker thread #{queue} starting..."
-        work(queue)
+        worker.work(queue)
         Rails.logger.info "Worker thread #{queue} finishing..."
         sleep 10
       end
@@ -48,7 +46,7 @@ while($running) do
       @@threads.delete(thread)
       thread = Thread.new {
         loop do
-          work(queue)
+          worker.work(queue)
           sleep 10
         end
       }

@@ -1,12 +1,13 @@
 require 'time'
 require 'json'
 
-module ManagerLib
-  ManagerLib.extend(ManagerLib)
-
+class Manager
   @@TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ%z"
   @@MAX_SCHEDULED_TIME = 1.hour
-  @@CHECK_QUEUES = nil
+
+  def initialize
+    @CHECK_QUEUES = get_check_queues
+  end
 
   def get_check_queues(filename=nil)
     filename ||= Rails.root.join('config/check_queues.yml').to_s
@@ -19,7 +20,7 @@ module ManagerLib
 
   def get_scheduled_checks
     checks = $redis.multi do
-      @@CHECK_QUEUES.keys.each do |queue|
+      @CHECK_QUEUES.keys.each do |queue|
         $redis.lrange(queue, 0, -1)
       end
       $redis.smembers('done_checks')
@@ -75,7 +76,7 @@ module ManagerLib
   def remove_check_data(done_checks)
     done_checks.each do |check_json|
       $redis.multi do
-        @@CHECK_QUEUES.keys.each do |queue|
+        @CHECK_QUEUES.keys.each do |queue|
           $redis.lrem(queue, 0, check_json)
         end
         $redis.srem('done_checks', check_json)
@@ -158,7 +159,7 @@ module ManagerLib
     end_time = start_time + period_time
     delay = metric.send("#{period}_check_delay")
     history = (now - end_time - delay) / period_time > 1
-    @@CHECK_QUEUES.each do |queue_name, queue_infos|
+    @CHECK_QUEUES.each do |queue_name, queue_infos|
       if (queue_infos['sources'].include?(source) &&
           queue_infos['periods'].include?(period) &&
           (!history || queue_infos['history']))
@@ -182,6 +183,4 @@ module ManagerLib
     check['start'] = Time.strptime(check['start'], @@TIME_FORMAT).utc
     check
   end
-
-  @@CHECK_QUEUES = get_check_queues
 end
