@@ -1,10 +1,9 @@
-module WorkerLib
-  WorkerLib.extend(WorkerLib)
+class Worker
+  @@TIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ%z'
 
-  # include SourceData
-  include Bootstrapping
-
-  @@QUEUE_WORKERS = nil
+  def initialize
+    @QUEUE_WORKERS = get_queue_workers
+  end
 
   def get_queue_workers(filename=nil)
     filename ||= Rails.root.join('config/check_queues.yml').to_s
@@ -18,8 +17,8 @@ module WorkerLib
 
   def work(queue)
     loop do
-      WorkerLib::work_on_queue_until_empty(queue)
-      break unless WorkerLib::work_on_random_check
+      work_on_queue_until_empty(queue)
+      break unless work_on_random_check
     end
   end
 
@@ -27,7 +26,7 @@ module WorkerLib
     loop do
       check_json = $redis.rpop(queue)
       if check_json
-        WorkerLib::execute_check(check_json)
+        execute_check(check_json)
       else
         break
       end
@@ -36,16 +35,16 @@ module WorkerLib
 
   def work_on_random_check
     check_json = nil
-    @@QUEUE_WORKERS.keys.shuffle.each do |queue|
+    @QUEUE_WORKERS.keys.shuffle.each do |queue|
       check_json = $redis.rpop(queue)
       break if check_json
     end
-    WorkerLib::execute_check(check_json) if check_json
+    execute_check(check_json) if check_json
     !!check_json
   end
 
   def execute_check(check_json)
-    check = WorkerLib::json_to_check(check_json)
+    check = json_to_check(check_json)
     source_data = SourceData.get_source_data(check['metric'], check['start'], check['period'])
     analysis = Bootstrapping::get_bootstrapping_analysis(source_data)
     $redis.multi do
@@ -62,6 +61,4 @@ module WorkerLib
     check['start'] = Time.strptime(check['start'], @@TIME_FORMAT).utc
     check
   end
-
-  @@QUEUE_WORKERS = get_queue_workers
 end

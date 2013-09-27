@@ -1,12 +1,11 @@
-class ManagerLibTest < ActiveSupport::TestCase
-  include ManagerLib
-
+class ManagerTest < ActiveSupport::TestCase
   @@TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ%z"
+  
+  setup :setup
 
-  setup :clear_redis
-
-  def clear_redis
+  def setup
     $redis.flushall
+    @manager = Manager.new
   end
 
   def get_new_check(metric, period)
@@ -49,7 +48,7 @@ class ManagerLibTest < ActiveSupport::TestCase
           workers: 2
       """)
     end
-    get_check_queues(filename)
+    @manager.get_check_queues(filename)
   end
   
   test "get check queues" do
@@ -75,8 +74,8 @@ class ManagerLibTest < ActiveSupport::TestCase
     $redis.lpush('queue3', 'elem3')
     $redis.sadd('done_checks', 'elem4')
     $redis.sadd('done_checks', 'elem5')
-    @@CHECK_QUEUES = {'queue1' => nil, 'queue2' => nil, 'queue3' => nil}
-    checks_to_do, done_checks = get_scheduled_checks
+    @manager.instance_variable_set(:@CHECK_QUEUES, {'queue1' => nil, 'queue2' => nil, 'queue3' => nil})
+    checks_to_do, done_checks = @manager.get_scheduled_checks
     assert Set.new(checks_to_do) == Set.new(['elem1', 'elem2', 'elem3'])
     assert Set.new(done_checks) == Set.new(['elem4', 'elem5'])
   end
@@ -86,11 +85,11 @@ class ManagerLibTest < ActiveSupport::TestCase
     metric_2 = metrics(:scheduling_lib_test_2)
     check_1 = get_new_check(metric_1, 'hour')
     check_2 = get_new_check(metric_2, 'month')
-    check_json_1 = check_to_json(check_1)
-    check_json_2 = check_to_json(check_2)
+    check_json_1 = @manager.check_to_json(check_1)
+    check_json_2 = @manager.check_to_json(check_2)
     observation = get_new_observation(metric_1, check_1)
     $redis.hset('observations', check_json_1, observation.to_hash.to_json)
-    registered, observed = register_done_checks([check_json_1, check_json_2])
+    registered, observed = @manager.register_done_checks([check_json_1, check_json_2])
     assert registered == 2
     assert Metric.find(metric_1.id).last_hour_check == check_1['start']
     assert Metric.find(metric_2.id).last_month_check == check_2['start']
@@ -104,8 +103,8 @@ class ManagerLibTest < ActiveSupport::TestCase
     metric_2 = metrics(:scheduling_lib_test_2)
     check_1 = get_new_check(metric_1, 'hour')
     check_2 = get_new_check(metric_2, 'month')
-    check_json_1 = check_to_json(check_1)
-    check_json_2 = check_to_json(check_2)
+    check_json_1 = @manager.check_to_json(check_1)
+    check_json_2 = @manager.check_to_json(check_2)
     observation_1 = get_new_observation(metric_1, check_1)
     $redis.lpush('queue_1', check_json_1)
     $redis.lpush('queue_2', check_json_2)
@@ -115,8 +114,8 @@ class ManagerLibTest < ActiveSupport::TestCase
     $redis.hset('metrics', check_json_1, metric_1.to_hash.to_json)
     $redis.hset('metrics', check_json_2, metric_2.to_hash.to_json)
     $redis.hset('observations', check_json_1, observation_1.to_hash.to_json)
-    @@CHECK_QUEUES = {'queue_1' => nil, 'queue_2' => nil}
-    remove_check_data([check_json_1])
+    @manager.instance_variable_set(:@CHECK_QUEUES, {'queue_1' => nil, 'queue_2' => nil})
+    @manager.remove_check_data([check_json_1])
     assert $redis.llen('queue_1') == 0
     assert $redis.llen('queue_2') == 1
     assert $redis.lindex('queue_2', 0) == check_json_2
@@ -129,7 +128,7 @@ class ManagerLibTest < ActiveSupport::TestCase
   end
 
   test "get new checks" do
-    new_checks = get_new_checks
+    new_checks = @manager.get_new_checks
     assert new_checks.count == 3
     assert new_checks[0]['metric'] = metrics(:scheduling_lib_test_1)
     assert new_checks[0]['start'] = Time.new(2012, 10, 1, 1, 0, 0, 0)
@@ -143,35 +142,35 @@ class ManagerLibTest < ActiveSupport::TestCase
   end
 
   test "get queue key" do
-    @@CHECK_QUEUES = get_new_check_queues
+    @manager.instance_variable_set(:@CHECK_QUEUES, get_new_check_queues)
     metric_1 = metrics(:scheduling_lib_test_1)
     check_1 = get_new_check(metric_1, 'hour')
-    check_1['start'] = crop_time(Time.now.utc, 'hour') - 1.hour
-    queue_key_1 = get_queue_key(check_1)
+    check_1['start'] = @manager.crop_time(Time.now.utc, 'hour') - 1.hour
+    queue_key_1 = @manager.get_queue_key(check_1)
     assert queue_key_1 == 'queue_1'
     metric_2 = metrics(:scheduling_lib_test_2)
     check_2 = get_new_check(metric_2, 'month')
-    check_2['start'] = crop_time(Time.now.utc, 'month') - 10.months
-    queue_key_2 = get_queue_key(check_2)
+    check_2['start'] = @manager.crop_time(Time.now.utc, 'month') - 10.months
+    queue_key_2 = @manager.get_queue_key(check_2)
     assert queue_key_2 == 'queue_2'
   end
 
   test "enqueue new checks" do
     now = Time.now.utc
-    @@CHECK_QUEUES = get_new_check_queues
+    @manager.instance_variable_set(:@CHECK_QUEUES, get_new_check_queues)
     metric_1 = metrics(:scheduling_lib_test_1)
     metric_2 = metrics(:scheduling_lib_test_2)
     metric_3 = metrics(:scheduling_lib_test_3)
     check_1 = get_new_check(metric_1, 'hour')
     check_2 = get_new_check(metric_2, 'month')
     check_3 = get_new_check(metric_3, 'month')
-    check_json_1 = check_to_json(check_1)
-    check_json_2 = check_to_json(check_2)
-    check_json_3 = check_to_json(check_3)
+    check_json_1 = @manager.check_to_json(check_1)
+    check_json_2 = @manager.check_to_json(check_2)
+    check_json_3 = @manager.check_to_json(check_3)
     $redis.lpush('queue_1', check_json_1)
     $redis.hset('scheduled_at', check_json_1, now.strftime(@@TIME_FORMAT))
     $redis.hset('scheduled_at', check_json_2, (now - 10.day).strftime(@@TIME_FORMAT))
-    enqueue_new_checks([check_1, check_2, check_3], [check_json_1])
+    @manager.enqueue_new_checks([check_1, check_2, check_3], [check_json_1])
     assert $redis.llen('queue_1') == 1
     assert $redis.lindex('queue_1', 0) == check_json_1
     assert $redis.llen('queue_2') == 2
