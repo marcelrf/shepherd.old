@@ -53,4 +53,24 @@ class WorkerTest < ActiveSupport::TestCase
     assert calls == [1, 2, 3]
     assert !$redis.rpop('queue')
   end
+
+  test "work on random check" do
+    calls = 0
+    @worker.instance_variable_set(:@QUEUE_WORKERS, {'queue1' => nil, 'queue2' => nil, 'queue3' => nil})
+    $redis.lpush('queue1', 'check_json1')
+    $redis.lpush('queue2', 'check_json2')
+    $redis.lpush('queue3', 'check_json3')
+    @worker.stub(:execute_check).with('check_json1') { calls += 1 }
+    @worker.stub(:execute_check).with('check_json2') { calls += 1 }
+    @worker.stub(:execute_check).with('check_json3') { calls += 1 }
+    @worker.work_on_random_check
+    assert calls == 1
+    assert $redis.llen('queue1') + $redis.llen('queue2') + $redis.llen('queue3') == 2
+    @worker.work_on_random_check
+    assert calls == 2
+    assert $redis.llen('queue1') + $redis.llen('queue2') + $redis.llen('queue3') == 1
+    @worker.work_on_random_check
+    assert calls == 3
+    assert $redis.llen('queue1') + $redis.llen('queue2') + $redis.llen('queue3') == 0
+  end
 end
