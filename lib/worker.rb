@@ -46,9 +46,9 @@ class Worker
   def execute_check(check_json)
     check = json_to_check(check_json)
     source_data = SourceData.get_source_data(check['metric'], check['start'], check['period'])
-    analysis = Bootstrapping::get_bootstrapping_analysis(source_data)
+    analysis = Bootstrapping.get_bootstrapping_analysis(source_data)
     $redis.multi do
-      $redis.hset('observations', analysis) if analysis['divergence'].abs > 1
+      $redis.hset('observations', check_json, JSON.dump(analysis)) if analysis['divergence'].abs > 1
       $redis.sadd('done_checks', check_json)
     end
   end
