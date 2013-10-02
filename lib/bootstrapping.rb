@@ -1,4 +1,4 @@
-module Bootstrapping
+class Bootstrapping
   # def get_bootstrapping_analysis(values)
   #   ###
   # end
