@@ -1,5 +1,4 @@
 class SourceData
-  # SourceData.extend(SourceData)
 #   @@TIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
 #   def get_source_data(metric, start_time, end_time, granularity)

@@ -73,4 +73,21 @@ class WorkerTest < ActiveSupport::TestCase
     assert calls == 3
     assert $redis.llen('queue1') + $redis.llen('queue2') + $redis.llen('queue3') == 0
   end
+
+  test "execute check" do
+    @worker.stub(:json_to_check).with('check_json_1') {
+      {'metric' => 'metric_1', 'start' => 'start_1', 'period' => 'period_1'}
+    }
+    SourceData.stub(:get_source_data).with('metric_1', 'start_1', 'period_1') {
+      'source_data_1'
+    }
+    Bootstrapping.stub(:get_bootstrapping_analysis).with('source_data_1') {
+      {'divergence' => 2}
+    }
+    @worker.execute_check('check_json_1')
+    assert $redis.hkeys('observations') == ['check_json_1']
+    assert JSON.load($redis.hget('observations', 'check_json_1')) == {'divergence' => 2}
+    assert $redis.scard('done_checks') == 1
+    assert $redis.spop('done_checks') == 'check_json_1'
+  end
 end
