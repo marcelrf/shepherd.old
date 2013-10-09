@@ -90,4 +90,13 @@ class WorkerTest < ActiveSupport::TestCase
     assert $redis.scard('done_checks') == 1
     assert $redis.spop('done_checks') == 'check_json_1'
   end
+
+  test "json to check" do
+    check_json_1 = JSON.dump({'start' => '2013-01-01T00:00:00Z+0000'})
+    metric_info = {:name => 'metric_1'}
+    $redis.hset('metrics', check_json_1, JSON.dump(metric_info))
+    check = @worker.json_to_check(check_json_1)
+    assert check['metric'].name == 'metric_1'
+    assert check['start'] == Time.strptime('2013-01-01T00:00:00Z+0000', '%Y-%m-%dT%H:%M:%SZ%z').utc
+  end
 end

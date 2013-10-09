@@ -56,7 +56,7 @@ class Worker
   def json_to_check(check_json)
     check = JSON.load(check_json)
     metric_json = $redis.hget('metrics', check_json)
-    metric_info = JSON.parse(metric_json)
+    metric_info = JSON.load(metric_json)
     check['metric'] = Metric.new(metric_info)
     check['start'] = Time.strptime(check['start'], @@TIME_FORMAT).utc
     check
