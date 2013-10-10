@@ -1,24 +1,25 @@
 class SourceData
-# @@TIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
+  @@TIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ%z'
 
   def self.get_source_data(metric, check_start, period)
-    method_name = 'get_source_data_from_' + metric.source
+    method_name = 'get_source_data_from_' + metric.source_info['source']
     SourceData.send(method_name, metric, check_start, period)
   end
 
   def self.get_source_data_from_librato(metric, check_start, period)
-    start_time, end_time = get_time_range(check_start, period)
+    start_time, end_time = get_time_range(metric, check_start, period)
     intervals = divide_time_range_for_librato(start_time, end_time, period)
+    source_info = metric.source_info
     source_data = []
     intervals.each do |interval_start, interval_end|
       url = 'https://metrics-api.librato.com/v1/'
-      url += "metrics/#{metric['metric']}"
+      url += "metrics/#{source_info['metric']}"
       url += "?start_time=#{interval_start.to_i}"
       url += "&end_time=#{interval_end.to_i}"
       url += "&resolution=#{1.send(period)}"
-      basic_auth = {:username => metric['username'], :password => metric['password']}
+      basic_auth = {:username => source_info['username'], :password => source_info['password']}
       response = HTTParty.get(url, :basic_auth => basic_auth)
-      interval_data = response['measurements']['unassigned'].map do |element|
+      interval_data = response['measurements']['statsd'].map do |element|
         time = Time.strptime(element['measure_time'].to_s, '%s')
         value = element['value']
         {'x' => time.strftime(@@TIME_FORMAT), 'y' => value}
@@ -28,7 +29,7 @@ class SourceData
     source_data
   end
 
-  def self.get_date_range(metric, check_start, period)
+  def self.get_time_range(metric, check_start, period)
     if period == 'hour'
       start_time = check_start - 30.days
     elsif period == 'day'
@@ -79,7 +80,7 @@ class SourceData
     end
   end
 
-  def divide_interval_for_librato(start_time, end_time, period)
+  def self.divide_time_range_for_librato(start_time, end_time, period)
     """
     librato only permits queries that return 100 elements at most
     if period is hours (for example)
