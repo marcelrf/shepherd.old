@@ -46,9 +46,9 @@ class Metric < ActiveRecord::Base
     seasonalities
   end
 
-  def source
+  def source_info
     source_info_json = self['source_info']
-    JSON.parse(source_info_json)['source']
+    JSON.parse(source_info_json)
   end
 
   def to_hash
