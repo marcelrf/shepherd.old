@@ -31,7 +31,8 @@ class SourceData
         end
       end
     end
-    group_data_by_period(source_data.to_a, period).map{|element| element[1]}
+    grouped_data = group_data_by_period(source_data.to_a, period)
+    grouped_data.map{|element| element[1]}
   end
 
   def self.get_time_range(metric, check_start, period)
