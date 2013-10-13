@@ -8,25 +8,30 @@ class SourceData
 
   def self.get_source_data_from_librato(metric, check_start, period)
     start_time, end_time = get_time_range(metric, check_start, period)
-    intervals = divide_time_range_for_librato(start_time, end_time, period)
+    # adapt time range representation to librato format
+    # who considers both start date and end date as inclusive
+    start_time += 1.hour
+    # librato only accepts periods up to 1 hour
+    # and queries up to 100 elements
+    intervals = divide_time_range(start_time, end_time, 'hour', 100)
     source_info = metric.source_info
-    source_data = []
+    source_data = Hash.new{|hash, key| hash[key] = 0}
     intervals.each do |interval_start, interval_end|
       url = 'https://metrics-api.librato.com/v1/'
       url += "metrics/#{source_info['metric']}"
       url += "?start_time=#{interval_start.to_i}"
       url += "&end_time=#{interval_end.to_i}"
-      url += "&resolution=#{1.send(period)}"
+      url += "&resolution=3600"
       basic_auth = {:username => source_info['username'], :password => source_info['password']}
       response = HTTParty.get(url, :basic_auth => basic_auth)
-      interval_data = response['measurements']['statsd'].map do |element|
-        time = Time.strptime(element['measure_time'].to_s, '%s')
-        value = element['value']
-        {'x' => time.strftime(@@TIME_FORMAT), 'y' => value}
+      response['measurements'].keys.each do |data_group|
+        response['measurements'][data_group].each do |element|
+          time = Time.strptime(element['measure_time'].to_s, '%s').utc
+          source_data[time] += element['sum']
+        end
       end
-      source_data.concat(interval_data)
     end
-    source_data
+    group_data_by_period(source_data.to_a, period).map{|element| element[1]}
   end
 
   def self.get_time_range(metric, check_start, period)
@@ -54,47 +59,57 @@ class SourceData
     """
     advanced_time = time
     if advance_until == 'hour'
-      if time.minute > 0 || time.second > 0
+      if time.min > 0 || time.sec > 0
         advanced_time = Time.new(
           time.year, time.month, time.day,
-          time.hour + 1, 0, 0, 0
-        ).utc
+          time.hour, 0, 0, 0
+        ).utc + 1.hour
       end
     elsif ['day', 'week'].include?(advance_until)
-      if time.hour > 0 || time.minute > 0 || time.second > 0
+      if time.hour > 0 || time.min > 0 || time.sec > 0
         advanced_time = Time.new(
-          time.year, time.month, time.day + 1,
+          time.year, time.month, time.day,
           0, 0, 0, 0
-        ).utc
+        ).utc + 1.day
       end
       if advance_until == 'week'
         advanced_time += ((8 - advanced_time.wday) % 7).days
       end
     elsif advance_until == 'month'
-      if time.day > 1 || time.hour > 0 || time.minute > 0 || time.second > 0
+      if time.day > 1 || time.hour > 0 || time.min > 0 || time.sec > 0
         advanced_time = Time.new(
-          time.year, time.month + 1, 0,
+          time.year, time.month, 1,
           0, 0, 0, 0
-        ).utc
+        ).utc + 1.month
       end
     end
+    advanced_time
   end
 
-  def self.divide_time_range_for_librato(start_time, end_time, period)
+  def self.divide_time_range(start_time, end_time, period, max_elements)
     """
-    librato only permits queries that return 100 elements at most
-    if period is hours (for example)
-    it will permit a 100 hours interval (4 days and 4 hours)
-    hence, longer queries must be split
+    Divides a time range in smaller time ranges
+    For services that do not support queries
+    longer than max_elements max_elements
     """
     intervals = []
     interval_start = start_time
     while interval_start < end_time
-      interval_end = interval_start + 100.send(period)
+      interval_end = interval_start + max_elements.send(period)
       interval_end = end_time if interval_end > end_time
       intervals.push([interval_start, interval_end])
       interval_start = interval_end
     end
     intervals
+  end
+
+  def self.group_data_by_period(data, period)
+    grouped_data = Hash.new{|hash, key| hash[key] = 0}
+    data.each do |element|
+      time, value = element
+      advanced_time = advance_time(time, period)
+      grouped_data[advanced_time] += value
+    end
+    grouped_data.to_a.sort_by{|element| element[0]}
   end
 end
