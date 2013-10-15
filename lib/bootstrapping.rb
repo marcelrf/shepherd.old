@@ -1,9 +1,65 @@
 class Bootstrapping
-  # def get_bootstrapping_analysis(values)
-  #   ###
-  # end
+  def self.get_bootstrapping_analysis(data, period)
+    periods = ['hour', 'day', 'week', 'month']
+    periods_to_analyze = periods[periods.index(period)..-1]
+    period_percentiles = {}
+    periods_to_analyze.each do |period_to_analyze|
+      period_data = get_period_data(data, period, period_to_analyze)
+      # percentiles = get_bootstrapping_percentiles(period_data)
+      # period_percentiles[period_to_analyze] = percentiles
+    end
+    # puts period_percentiles
+  end
 
-  # def get_bootstrapping_percentiles(values)
+  def self.get_period_data(base_data, base_period, target_period)
+    if base_period == 'hour'
+      if target_period == 'hour'
+        base_data[-[24, base_data.size].min..-1]
+      elsif target_period == 'day'
+        slices = base_data.each_slice(24)
+        slices.map{|slice| slice[0]}[-[30, slices.size].min..-1]
+      elsif target_period == 'week'
+        slices = base_data.each_slice(168)
+        slices.map{|slice| slice[0]}[-[26, slices.size].min..-1]
+      end
+    elsif base_period == 'day'
+      if target_period == 'day'
+        base_data[-[30, base_data.size].min..-1]
+      elsif target_period == 'week'
+        slices = base_data.each_slice(7)
+        slices.map{|slice| slice[0]}[-[26, slices.size].min..-1]
+      elsif target_period == 'month'
+        initial_day = Time.strptime(base_data[0]['x'], @@TIME_FORMAT)
+        last_day = Time.strptime(base_data[-1]['x'], @@TIME_FORMAT)
+        current_day = initial_day
+        sum_counter = 0
+        sliced_data = []
+        while current_day < last_day
+          current_element = base_data.select do |element|
+            Time.strptime(element['x'], @@TIME_FORMAT) == current_day
+          end
+          sliced_data.push(current_element[0])
+          sum_counter += 1
+          current_day = initial_day + sum_counter.months
+        end
+        sliced_data[-[12, sliced_data.size].min..-1]
+      end
+    elsif base_period == 'week'
+      if target_period == 'week'
+        base_data[-[26, base_data.size].min..-1]
+      elsif target_period == 'month'
+        nil #TODO! pick the most centered week
+      end
+    elsif base_period == 'month'
+      base_data[-[12, base_data.size].min..-1]
+    end
+  end
+
+end
+
+# @@TIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
+
+# def get_bootstrapping_percentiles(values)
   #   samples = get_bootstrapping_samples(values, 1000)
   #   # transform samples into percentiles
   #   percentiles = samples.map do |sample|
@@ -70,9 +126,6 @@ class Bootstrapping
   #   end
   #   samples
   # end
-end
-
-# @@TIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
 #   def analyze_metric
 #     control_periods = get_control_periods(granularity, metric.seasonalities)
@@ -116,50 +169,3 @@ end
 #       'data' => source_data[-[30, source_data.size].min..-1],
 #     }
 #   end
-
-#   private
-
-
-
-#   def get_sliced_data(control_data, control_period, granularity)
-#     if granularity == 'hour'
-#       if control_period == 'hour'
-#         control_data[-[24, control_data.size].min..-1]
-#       elsif control_period == 'day'
-#         slices = control_data.each_slice(24)
-#         slices.map{|slice| slice[0]}[-[30, slices.size].min..-1]
-#       elsif control_period == 'week'
-#         slices = control_data.each_slice(168)
-#         slices.map{|slice| slice[0]}[-[26, slices.size].min..-1]
-#       end
-#     elsif granularity == 'day'
-#       if control_period == 'day'
-#         control_data[-[30, control_data.size].min..-1]
-#       elsif control_period == 'week'
-#         slices = control_data.each_slice(7)
-#         slices.map{|slice| slice[0]}[-[26, slices.size].min..-1]
-#       elsif control_period == 'month'
-#         initial_day = Time.strptime(control_data[0]['x'], @@TIME_FORMAT)
-#         last_day = Time.strptime(control_data[-1]['x'], @@TIME_FORMAT)
-#         current_day = initial_day
-#         sum_counter = 0
-#         sliced_data = []
-#         while current_day < last_day
-#           current_element = control_data.select do |element|
-#             Time.strptime(element['x'], @@TIME_FORMAT) == current_day
-#           end
-#           sliced_data.push(current_element[0])
-#           sum_counter += 1
-#           current_day = initial_day + sum_counter.months
-#         end
-#         sliced_data[-[12, sliced_data.size].min..-1]
-#       end
-#     elsif granularity == 'week'
-#       if control_period == 'week'
-#         control_data[-[26, control_data.size].min..-1]
-#       elsif control_period == 'month'
-#         nil #TODO! pick the most centered week
-#       end
-#     elsif granularity == 'months'
-#       control_data[-[12, control_data.size].min..-1]
-#     end
