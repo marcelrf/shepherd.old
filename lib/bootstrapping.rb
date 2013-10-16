@@ -3,8 +3,9 @@ class Bootstrapping
     periods = ['hour', 'day', 'week', 'month']
     periods_to_analyze = periods[periods.index(period)..-1]
     period_percentiles = {}
+    control_data, current_data = data[0...-1], data[-1]
     periods_to_analyze.each do |period_to_analyze|
-      period_data = get_period_data(data, period, period_to_analyze)
+      period_data = get_period_data(control_data, period, period_to_analyze)
       # percentiles = get_bootstrapping_percentiles(period_data)
       # period_percentiles[period_to_analyze] = percentiles
     end
@@ -14,20 +15,23 @@ class Bootstrapping
   def self.get_period_data(base_data, base_period, target_period)
     if base_period == 'hour'
       if target_period == 'hour'
-        base_data[-[24, base_data.size].min..-1]
+        base_data.reverse[0...24].reverse
       elsif target_period == 'day'
-        slices = base_data.each_slice(24)
-        slices.map{|slice| slice[0]}[-[30, slices.size].min..-1]
+        slices = base_data.reverse.each_slice(24)
+        slices = slices.select{|slice| slice.size == 24}
+        slices.map{|slice| slice[-1]}[0...30].reverse
       elsif target_period == 'week'
-        slices = base_data.each_slice(168)
-        slices.map{|slice| slice[0]}[-[26, slices.size].min..-1]
+        slices = base_data.reverse.each_slice(168)
+        slices = slices.select{|slice| slice.size == 168}
+        slices.map{|slice| slice[-1]}[0...26].reverse
       end
     elsif base_period == 'day'
       if target_period == 'day'
-        base_data[-[30, base_data.size].min..-1]
+        base_data.reverse[0...30].reverse
       elsif target_period == 'week'
-        slices = base_data.each_slice(7)
-        slices.map{|slice| slice[0]}[-[26, slices.size].min..-1]
+        slices = base_data.reverse.each_slice(7)
+        slices = slices.select{|slice| slice.size == 7}
+        slices.map{|slice| slice[-1]}[0...26].reverse
       elsif target_period == 'month'
         initial_day = Time.strptime(base_data[0]['x'], @@TIME_FORMAT)
         last_day = Time.strptime(base_data[-1]['x'], @@TIME_FORMAT)
@@ -131,7 +135,7 @@ end
 #     control_periods = get_control_periods(granularity, metric.seasonalities)
 #     start_time, end_time = get_date_range(check_start, check_end, control_periods[-1])
 #     source_data = get_source_data(source_info, start_time, end_time, granularity)
-#     control_data, current_data = source_data[0...-1], source_data[-1]
+#     'control_data', current_data = source_data[0...-1], source_data[-1]
 
 #     bootstrapping_results = {}
 #     control_periods.each do |control_period|
