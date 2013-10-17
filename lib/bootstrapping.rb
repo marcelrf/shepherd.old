@@ -1,20 +1,37 @@
 class Bootstrapping
   def self.get_bootstrapping_analysis(data, period)
     control_data, current_data = data[0...-1], data[-1]
+    control_gap = control_data.map{|e| e[1]}.max - control_data.map{|e| e[1]}.min
     periods = ['hour', 'day', 'week', 'month']
     periods_to_analyze = periods[periods.index(period)..periods.index(period)+2]
-    period_percentiles = {}
+    percentiles = Hash.new{|h, k| h[k] = 0}
+    divider = 0
     periods_to_analyze.each do |period_to_analyze|
       period_data = slice_control_data(control_data, period, period_to_analyze)
-      values = period_data.map{|element| element[1]}
-      percentiles = get_bootstrapping_percentiles(values)
-      period_percentiles[period_to_analyze] = percentiles
+      period_percentiles = get_bootstrapping_percentiles(period_data.map{|element| element[1]})
+      period_factor = get_period_factor(period, period_data, period_percentiles, control_gap)
+      period_percentiles.keys.each do |percentile|
+        percentiles[percentile] += period_percentiles[percentile] * period_factor
+      end
+      divider += period_factor
     end
-    puts period_percentiles
+    percentiles.keys.each do |percentile|
+      percentiles[percentile] /= divider
+    end
+    difference = current_data[1] - percentiles['median']
+    if difference > 0
+      divergence = difference / (percentiles['high'] - percentiles['median'])
+    elsif difference < 0 
+      divergence = -difference / (percentiles['low'] - percentiles['median'])
+    else
+      divergence = 0
+    end
+    percentiles['value'] = current_data[1]
+    percentiles['divergence'] = divergence
+    percentiles
   end
 
   def self.slice_control_data(base_data, base_period, target_period)
-    puts base_data.size, base_period, target_period
     if base_period == 'hour'
       if target_period == 'hour'
         base_data.reverse[0...24].reverse
@@ -138,48 +155,24 @@ class Bootstrapping
     end
     samples
   end
+
+  def self.get_period_factor(period, data, percentiles, gap)
+    if period == 'hour'
+      confidence = get_confidence(data.count, 24)
+    elsif period == 'day'
+      confidence = get_confidence(data.count, 30)
+    elsif period == 'week'
+      confidence = get_confidence(data.count, 26)
+    elsif period == 'month'
+      confidence = get_confidence(data.count, 24)
+    end
+    compactness = 1 - (percentiles['high'] - percentiles['low']) / gap
+    (confidence * compactness) ** 3
+  end
+
+  def self.get_confidence(count, max)
+    initial_factor = 2 * count / max.to_f - 1
+    sign = initial_factor < 0 ? -1 : 1
+    (initial_factor.abs ** 0.25 * sign + 1) / 2
+  end
 end
-
-
-#   def analyze_metric
-#     control_periods = get_control_periods(granularity, metric.seasonalities)
-#     start_time, end_time = get_date_range(check_start, check_end, control_periods[-1])
-#     source_data = get_source_data(source_info, start_time, end_time, granularity)
-#     'control_data', current_data = source_data[0...-1], source_data[-1]
-
-#     bootstrapping_results = {}
-#     control_periods.each do |control_period|
-#       period_data = get_sliced_data(control_data, control_period, granularity)
-#       period_values = period_data.map{|element| element['y']}
-#       period_percentiles = get_bootstrapping_percentiles(period_values)
-#       bootstrapping_results[control_period] = period_percentiles
-#     end
-
-#     accumulated_low, accumulated_median, accumulated_high = 0, 0, 0
-#     bootstrapping_results.each do |period, percentiles|
-#       accumulated_low += percentiles['low']
-#       accumulated_median += percentiles['median']
-#       accumulated_high += percentiles['high']
-#     end
-#     total_low = accumulated_low / bootstrapping_results.count
-#     total_median = accumulated_median / bootstrapping_results.count
-#     total_high = accumulated_high / bootstrapping_results.count
-
-#     difference = current_data['y'] - total_median
-#     if difference > 0
-#       divergence = difference / (total_high - total_median)
-#     elsif difference < 0 
-#       divergence = -difference / (total_low - total_median)
-#     else
-#       divergence = 0
-#     end
-
-#     render :json => {
-#       'low' => total_low,
-#       'median' => total_median,
-#       'high' => total_high,
-#       'value' => current_data['y'],
-#       'divergence' => divergence,
-#       'data' => source_data[-[30, source_data.size].min..-1],
-#     }
-#   end
