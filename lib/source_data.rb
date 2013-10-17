@@ -36,13 +36,13 @@ class SourceData
 
   def self.get_time_range(metric, check_start, period)
     if period == 'hour'
-      start_time = check_start - 30.days
-    elsif period == 'day'
       start_time = check_start - 26.weeks
+    elsif period == 'day'
+      start_time = check_start - 24.months
     elsif period == 'week'
-      start_time = check_start - 12.months
+      start_time = check_start - 24.months
     elsif period == 'month'
-      start_time = check_start - 5.years
+      start_time = check_start - 24.months
     end
     if start_time < metric.data_start
       start_time = advance_time(metric.data_start, period)
