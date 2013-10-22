@@ -23,7 +23,7 @@ class ManagerTest < ActiveSupport::TestCase
     Observation.new({
       :metric => metric,
       :start => check['start'],
-      :end => check['start'] + 1.send(check['period']),
+      :period => check['period'],
       :low => 1,
       :median => 2,
       :high => 3,
@@ -88,7 +88,9 @@ class ManagerTest < ActiveSupport::TestCase
     check_json_1 = @manager.check_to_json(check_1)
     check_json_2 = @manager.check_to_json(check_2)
     observation = get_new_observation(metric_1, check_1)
-    $redis.hset('observations', check_json_1, observation.to_hash.to_json)
+    observation_hash = observation.to_hash
+    observation_hash.delete('metric_id')
+    $redis.hset('observations', check_json_1, observation_hash.to_json)
     registered, observed = @manager.register_done_checks([check_json_1, check_json_2])
     assert registered == 2
     assert Metric.find(metric_1.id).last_hour_check == check_1['start']
@@ -106,6 +108,8 @@ class ManagerTest < ActiveSupport::TestCase
     check_json_1 = @manager.check_to_json(check_1)
     check_json_2 = @manager.check_to_json(check_2)
     observation_1 = get_new_observation(metric_1, check_1)
+    observation_1_hash = observation_1.to_hash
+    observation_1_hash.delete('metric_id')
     $redis.lpush('queue_1', check_json_1)
     $redis.lpush('queue_2', check_json_2)
     $redis.sadd('done_checks', check_json_1)
@@ -113,7 +117,7 @@ class ManagerTest < ActiveSupport::TestCase
     $redis.hset('scheduled_at', check_json_2, now_text)
     $redis.hset('metrics', check_json_1, metric_1.to_hash.to_json)
     $redis.hset('metrics', check_json_2, metric_2.to_hash.to_json)
-    $redis.hset('observations', check_json_1, observation_1.to_hash.to_json)
+    $redis.hset('observations', check_json_1, observation_1_hash.to_json)
     @manager.instance_variable_set(:@CHECK_QUEUES, {'queue_1' => nil, 'queue_2' => nil})
     @manager.remove_check_data([check_json_1])
     assert $redis.llen('queue_1') == 0

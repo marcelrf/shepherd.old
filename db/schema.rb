@@ -59,9 +59,6 @@ ActiveRecord::Schema.define(:version => 20130705215208) do
     t.integer  "day_check_delay"
     t.integer  "week_check_delay"
     t.integer  "month_check_delay"
-    t.float    "day_seasonality"
-    t.float    "week_seasonality"
-    t.float    "month_seasonality"
     t.datetime "last_hour_check"
     t.datetime "last_day_check"
     t.datetime "last_week_check"
@@ -75,7 +72,7 @@ ActiveRecord::Schema.define(:version => 20130705215208) do
   create_table "observations", :force => true do |t|
     t.integer  "metric_id"
     t.datetime "start"
-    t.datetime "end"
+    t.string   "period"
     t.float    "low"
     t.float    "median"
     t.float    "high"

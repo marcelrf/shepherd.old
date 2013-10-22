@@ -2,7 +2,7 @@ class SourceData
   @@TIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ%z'
 
   def self.get_source_data(metric, check_start, period)
-    method_name = 'get_source_data_from_' + metric.source_info['source']
+    method_name = 'get_source_data_from_' + metric.source_info['name']
     SourceData.send(method_name, metric, check_start, period)
   end
 

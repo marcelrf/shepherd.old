@@ -6,7 +6,7 @@ class SourceDataTest < ActiveSupport::TestCase
   end
 
   test "get source data" do
-    metric = Metric.new(:source_info => '{"source":"source_1"}')
+    metric = Metric.new(:source_info => '{"name":"source_1"}')
     start = Time.new(2013, 1, 1, 0, 0, 0, 0).utc
     period = 'day'
     SourceData.stub(:get_source_data_from_source_1).with(metric, start, period) {

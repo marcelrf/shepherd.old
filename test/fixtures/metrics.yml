@@ -1,7 +1,7 @@
 scheduling_lib_test_1:
   name: Client Metric 1
   tags: client, group, metric
-  source_info: '{"source":"source_1"}'
+  source_info: '{"name":"source_1"}'
   polarity: positive
   check_every_hour: true
   check_every_day: false
@@ -11,9 +11,6 @@ scheduling_lib_test_1:
   day_check_delay: 10
   week_check_delay: 10
   month_check_delay: 10
-  day_seasonality: 0
-  week_seasonality: 0
-  month_seasonality: 0
   last_hour_check: 2012-10-01T00:00:00UTC
   last_day_check: 2012-10-01T00:00:00UTC
   last_week_check: 2012-10-01T00:00:00UTC
@@ -24,7 +21,7 @@ scheduling_lib_test_1:
 scheduling_lib_test_2:
   name: Client Metric 2
   tags: client, group, metric
-  source_info: '{"source":"source_2"}'
+  source_info: '{"name":"source_2"}'
   polarity: positive
   check_every_hour: false
   check_every_day: false
@@ -34,9 +31,6 @@ scheduling_lib_test_2:
   day_check_delay: 10
   week_check_delay: 10
   month_check_delay: 10
-  day_seasonality: 0
-  week_seasonality: 0
-  month_seasonality: 0
   last_hour_check: 2012-10-01T00:00:00
   last_day_check: 2012-10-01T00:00:00
   last_week_check: 2012-10-01T00:00:00
@@ -47,7 +41,7 @@ scheduling_lib_test_2:
 scheduling_lib_test_3:
   name: Client Metric 3
   tags: client, group, metric
-  source_info: '{"source":"source_2"}'
+  source_info: '{"name":"source_2"}'
   polarity: positive
   check_every_hour: false
   check_every_day: false
@@ -57,9 +51,6 @@ scheduling_lib_test_3:
   day_check_delay: 10
   week_check_delay: 10
   month_check_delay: 10
-  day_seasonality: 0
-  week_seasonality: 0
-  month_seasonality: 0
   last_hour_check: 2012-10-01T00:00:00
   last_day_check: 2012-10-01T00:00:00
   last_week_check: 2012-10-01T00:00:00
