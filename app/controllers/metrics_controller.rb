@@ -1,4 +1,9 @@
 class MetricsController < InheritedResources::Base
+  def show
+    @metric = Metric.find(params[:id])
+    render 'metrics/librato/show'
+  end
+
   def create
     metric_params = get_metric_params(params)
     @metric = Metric.new(metric_params)

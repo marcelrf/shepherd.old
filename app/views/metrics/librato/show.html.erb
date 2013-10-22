@@ -30,13 +30,6 @@
   <dt><strong><%= model_class.human_attribute_name(:month_check_delay) %>:</strong></dt>
   <dd><%= @metric.check_every_month ? @metric.month_check_delay : 'None' %></dd>
   <br />
-  <dt><strong><%= model_class.human_attribute_name(:day_seasonality) %>:</strong></dt>
-  <dd><%= @metric.day_seasonality %></dd>
-  <dt><strong><%= model_class.human_attribute_name(:week_seasonality) %>:</strong></dt>
-  <dd><%= @metric.week_seasonality %></dd>
-  <dt><strong><%= model_class.human_attribute_name(:month_seasonality) %>:</strong></dt>
-  <dd><%= @metric.month_seasonality %></dd>
-  <br />
   <dt><strong><%= model_class.human_attribute_name(:last_hour_check) %>:</strong></dt>
   <dd><%= @metric.last_hour_check ? @metric.last_hour_check : 'None' %></dd>
   <dt><strong><%= model_class.human_attribute_name(:last_day_check) %>:</strong></dt>

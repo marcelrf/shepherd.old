@@ -7,9 +7,8 @@
     <tr>
       <th><%= model_class.human_attribute_name(:metric) %></th>
       <th><%= model_class.human_attribute_name(:divergence) %></th>
-      <th><%= model_class.human_attribute_name(:endurance) %></th>
       <th><%= model_class.human_attribute_name(:start) %></th>
-      <th><%= model_class.human_attribute_name(:end) %></th>
+      <th><%= model_class.human_attribute_name(:period) %></th>
       <th><%= model_class.human_attribute_name(:observed_at) %></th>
       <th><%=t '.actions', :default => t("helpers.actions") %></th>
     </tr>
@@ -19,9 +18,8 @@
       <tr>
         <td><%= observation.metric.name %></td>
         <td><%= (observation.divergence > 0 ? '+' : '') + observation.divergence.round(2).to_s %></td>
-        <td><%= endurance(observation.start, observation.end) %></td>
         <td><%= observation.start %></td>
-        <td><%= observation.end %></td>
+        <td><%= observation.period %></td>
         <td><%= observation.updated_at %></td>
         <td>
           <%= link_to t('.show', :default => t("helpers.links.show")),

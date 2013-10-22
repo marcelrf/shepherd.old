@@ -1,6 +1,7 @@
 class Bootstrapping
   def self.get_bootstrapping_analysis(data, period)
     control_data, current_data = data[0...-1], data[-1]
+    return nil if control_data.size < minimum_size(period)
     control_gap = control_data.map{|e| e[1]}.max - control_data.map{|e| e[1]}.min
     periods = ['hour', 'day', 'week', 'month']
     periods_to_analyze = periods[periods.index(period)..periods.index(period)+2]
@@ -174,5 +175,17 @@ class Bootstrapping
     initial_factor = 2 * count / max.to_f - 1
     sign = initial_factor < 0 ? -1 : 1
     (initial_factor.abs ** 0.25 * sign + 1) / 2
+  end
+
+  def self.minimum_size(period)
+    if period == 'hour'
+      720
+    elsif period == 'day'
+      30
+    elsif period == 'week'
+      10
+    elsif period == 'month'
+      6
+    end
   end
 end

@@ -13,9 +13,6 @@ class CreateMetrics < ActiveRecord::Migration
       t.integer :day_check_delay
       t.integer :week_check_delay
       t.integer :month_check_delay
-      t.float :day_seasonality
-      t.float :week_seasonality
-      t.float :month_seasonality
       t.datetime :last_hour_check
       t.datetime :last_day_check
       t.datetime :last_week_check

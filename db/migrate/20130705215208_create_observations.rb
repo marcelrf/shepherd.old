@@ -3,7 +3,7 @@ class CreateObservations < ActiveRecord::Migration
     create_table :observations do |t|
       t.references :metric
       t.datetime :start
-      t.datetime :end
+      t.string :period
       t.float :low
       t.float :median
       t.float :high

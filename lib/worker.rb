@@ -44,19 +44,24 @@ class Worker
   end
 
   def execute_check(check_json)
+    Rails.logger.info "START execute_check #{check_json}"
     check = json_to_check(check_json)
     source_data = SourceData.get_source_data(check['metric'], check['start'], check['period'])
-    analysis = Bootstrapping.get_bootstrapping_analysis(source_data)
+    analysis = Bootstrapping.get_bootstrapping_analysis(source_data, check['period'])
     $redis.multi do
-      $redis.hset('observations', check_json, JSON.dump(analysis)) if analysis['divergence'].abs > 1
+      if analysis && analysis['divergence'].abs > 1
+        $redis.hset('observations', check_json, JSON.dump(analysis))
+      end
       $redis.sadd('done_checks', check_json)
     end
+    Rails.logger.info "END execute_check #{check_json}"
   end
 
   def json_to_check(check_json)
     check = JSON.load(check_json)
     metric_json = $redis.hget('metrics', check_json)
     metric_info = JSON.load(metric_json)
+    metric_info['source_info'] = JSON.dump(metric_info['source_info'])
     check['metric'] = Metric.new(metric_info)
     check['start'] = Time.strptime(check['start'], @@TIME_FORMAT).utc
     check

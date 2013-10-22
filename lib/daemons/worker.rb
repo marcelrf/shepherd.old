@@ -24,9 +24,7 @@ queue_workers.each do |queue, workers|
   workers.times do
     thread = Thread.new {
       loop do
-        Rails.logger.info "Worker thread #{queue} starting..."
         worker.work(queue)
-        Rails.logger.info "Worker thread #{queue} finishing..."
         sleep 10
       end
     }
@@ -39,7 +37,7 @@ Rails.logger.info "[#{Time.now.utc}] WORKER: Started #{@@threads.size} threads."
 while($running) do
   Rails.logger.info "[#{Time.now.utc}] WORKER: Checking health of threads..."
   restarted = 0
-  @@threads.each do |thread, queue|
+  @@threads.to_a.each do |thread, queue|
     unless thread.status
       # restart thread
       queue = @@threads[thread]

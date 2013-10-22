@@ -3,7 +3,7 @@ require 'json'
 
 class Manager
   @@TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ%z"
-  @@MAX_SCHEDULED_TIME = 1.hour
+  @@MAX_SCHEDULED_TIME = 10.minutes
 
   def initialize
     @CHECK_QUEUES = get_check_queues
@@ -54,12 +54,13 @@ class Manager
           observation = Observation.where(
             :metric_id => metric.id,
             :start => check_start,
-            :end => check_start + 1.send(check_period)
+            :period => check_period
           )[0]
           unless observation
             observation_info = JSON.parse(observation_json)
             observation_info['metric'] = metric
-            observation_info.delete('metric_id')
+            observation_info['start'] = check_start
+            observation_info['period'] = check_period
             observation = Observation.new(observation_info)
             observed += 1
           end
@@ -117,14 +118,14 @@ class Manager
 
   def crop_time(time, crop_until)
     if crop_until == 'hour'
-      Time.new(time.year, time.month, time.day, time.hour)
+      Time.new(time.year, time.month, time.day, time.hour, 0, 0, 0).utc
     elsif crop_until == 'day'
-      Time.new(time.year, time.month, time.day)
+      Time.new(time.year, time.month, time.day, 0, 0, 0, 0).utc
     elsif crop_until == 'week'
-      last_day = Time.new(time.year, time.month, time.day)
+      last_day = Time.new(time.year, time.month, time.day, 0, 0, 0, 0).utc
       last_day - ((last_day.wday - 1) % 7) * 1.day
     elsif crop_until == 'month'
-      Time.new(time.year, time.month, 1)
+      Time.new(time.year, time.month, 1, 0, 0, 0, 0).utc
     end
   end
 
@@ -152,7 +153,7 @@ class Manager
   def get_queue_key(check)
     now = Time.now.utc
     metric = check['metric']
-    source = metric.source
+    source = metric.source_info['name']
     period = check['period']
     start_time = check['start']
     period_time = 1.send(period)
