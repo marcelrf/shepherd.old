@@ -1,5 +1,5 @@
 namespace :metrics do
-  desc "Makes the system start to watch the metrics passed"
+  desc "Makes Shepherd start to watch the passed metrics"
   task :watch, [:user, :pass, :pattern, :polarity] => :environment do |t, args|
     librato_delay = 5 # in minutes
     polarity = args[:polarity].nil? ? 'positive' : args[:polarity]
@@ -8,7 +8,7 @@ namespace :metrics do
       metric_name = librato_metric['name']
       existing = Metric.where('name' => metric_name)
       if existing.count == 0
-        puts "Watching #{metric_name} (#{polarity})"
+        puts "Watching #{metric_name}"
         Metric.create!(
           :name => metric_name,
           :polarity => polarity,
@@ -33,7 +33,7 @@ namespace :metrics do
     end
   end
 
-  desc "Makes the system stop to watch the passed metrics"
+  desc "Makes Shepherd stop watching the passed metrics"
   task :unwatch, [:regexp] => :environment do |t, args|
     regexp = Regexp.new(args[:regexp])
     Metric.all.each do |metric|
@@ -44,4 +44,15 @@ namespace :metrics do
       end
     end
   end
+
+  desc "Lists all the metrics being watched by Shepherd"
+  task :watched, [:regexp] => :environment do |t, args|
+    regexp = args[:regexp].nil? ? nil : Regexp.new(args[:regexp])
+    Metric.all.each do |metric|
+      metric_name = metric.source_info['metric']
+      if regexp.nil? || regexp.match(metric_name)
+        puts "Watched #{metric_name}"
+      end
+    end
+  end 
 end
