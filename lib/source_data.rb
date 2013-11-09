@@ -112,4 +112,11 @@ class SourceData
     end
     grouped_data.to_a.sort_by{|element| element[0]}
   end
+
+  def self.get_metrics_from_librato(username, password, pattern)
+    url = 'https://metrics-api.librato.com/v1/'
+    url += "metrics?name=#{pattern}"
+    basic_auth = {:username => username, :password => password}
+    HTTParty.get(url, :basic_auth => basic_auth)['metrics']
+  end
 end
