@@ -1,16 +1,34 @@
 namespace :metrics do
   desc "Makes the system start to watch the metrics passed"
   task :watch, [:user, :pass, :pattern, :polarity] => :environment do |t, args|
-    args[:polarity] = 'positive' if args[:polarity].nil?
+    librato_delay = 5 # in minutes
+    polarity = args[:polarity].nil? ? 'positive' : args[:polarity]
     librato_metrics = SourceData.get_metrics_from_librato(args[:user], args[:pass], args[:pattern])
     librato_metrics.each do |librato_metric|
       metric_name = librato_metric['name']
       existing = Metric.where('name' => metric_name)
       if existing.count == 0
-        puts "Watching #{metric_name} #{args[:polarity]}"
-        # Metric.create!(
-        #   :name => metric_name
-        # )
+        puts "Watching #{metric_name} (#{polarity})"
+        Metric.create!(
+          :name => metric_name,
+          :polarity => polarity,
+          :check_every_hour => true,
+          :check_every_day => true,
+          :check_every_week => true,
+          :check_every_month => true,
+          :hour_check_delay => librato_delay,
+          :day_check_delay => librato_delay,
+          :week_check_delay => librato_delay,
+          :month_check_delay => librato_delay,
+          :data_start => Time.new(2000, 1, 1, 0, 0, 0, 0).utc,
+          :enabled => true,
+          :source_info => JSON.dump({
+            'source' => 'librato',
+            'metric' => metric_name,
+            'username' => args[:user],
+            'password' => args[:pass]
+          })
+        )
       end
     end
   end
