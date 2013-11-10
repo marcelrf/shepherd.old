@@ -44,7 +44,8 @@ class Manager
         check_start = check['start']
         check_period = check['period']
         field_name = "last_#{check_period}_check"
-        if metric.send(field_name) < check_start
+        last_period_check = metric.send(field_name)
+        if !last_period_check || last_period_check < check_start
           metric.send(field_name + '=', check_start)
           registered += 1
         end
@@ -138,6 +139,7 @@ class Manager
         scheduled_at = $redis.hget('scheduled_at', check_json)
         unless scheduled_at && Time.strptime(scheduled_at, @@TIME_FORMAT) > now - @@MAX_SCHEDULED_TIME
           queue_key = get_queue_key(check)
+          Rails.logger.info "QUEUE_KEY #{queue_key}"
           $redis.multi do
             $redis.lpush(queue_key, check_json)
             $redis.hset('metrics', check_json, check['metric'].to_hash.to_json)
