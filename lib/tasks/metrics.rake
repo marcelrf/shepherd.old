@@ -23,7 +23,7 @@ namespace :metrics do
           :data_start => Time.new(2000, 1, 1, 0, 0, 0, 0).utc,
           :enabled => true,
           :source_info => JSON.dump({
-            'source' => 'librato',
+            'name' => 'librato',
             'metric' => metric_name,
             'username' => args[:user],
             'password' => args[:pass]
