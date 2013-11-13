@@ -179,7 +179,7 @@ class Bootstrapping
 
   def self.minimum_size(period)
     if period == 'hour'
-      720
+      168
     elsif period == 'day'
       30
     elsif period == 'week'
