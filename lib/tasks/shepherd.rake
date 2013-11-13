@@ -1,4 +1,4 @@
-namespace :metrics do
+namespace :shepherd do
   desc "Makes Shepherd start to watch the passed metrics"
   task :watch, [:user, :pass, :pattern, :polarity] => :environment do |t, args|
     librato_delay = 5 # in minutes
@@ -54,5 +54,27 @@ namespace :metrics do
         puts "Watched #{metric_name}"
       end
     end
-  end 
+  end
+
+  desc "Restart all Shepherd daemons from scratch (clears cache)"
+  task :restart => :environment do |t, args|
+    execute_task('daemon:manager:stop')
+    execute_task('daemon:worker:stop')
+    $redis.flushall
+    execute_task('daemon:manager:start')
+    execute_task('daemon:worker:start')
+  end
+
+  desc "Stop all Shepherd daemons and clear cache"
+  task :stop => :environment do |t, args|
+    execute_task('daemon:manager:stop')
+    execute_task('daemon:worker:stop')
+    $redis.flushall
+  end
+
+  def execute_task(name)
+    task = Rake::Task[name]
+    task.reenable
+    task.invoke
+  end
 end
