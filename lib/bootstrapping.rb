@@ -137,21 +137,15 @@ class Bootstrapping
     # using a magic number algorithm
     magic_number = 0.994
     last_value_timestamp = values[-1][0].to_i
-    weighted_values = values.map do |element|
+    weighted_values = []
+    values.each do |element|
       value_timestamp = element[0].to_i
       time_proportion = value_timestamp / last_value_timestamp
       time_factor = 1 / (1 + Math.log(time_proportion) / Math.log(magic_number))
-      [element[1], time_factor]
+      (time_factor * 10).ceil.times do
+        weighted_values.push(element[1])
+      end
     end
-    # counter, magic_number = 1, 1
-    # while magic_number <= values.count
-    #   (1..magic_number).each do |index|
-    #     weighted_values.push(values[-index])
-    #   end
-    #   counter += 1
-    #   magic_number += counter
-    # end
-    # weighted_values.concat(values)
     # create the samples
     samples = []
     iterations.times do
