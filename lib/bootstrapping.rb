@@ -9,7 +9,7 @@ class Bootstrapping
     divider = 0
     periods_to_analyze.each do |period_to_analyze|
       period_data = slice_control_data(control_data, period, period_to_analyze)
-      period_percentiles = get_bootstrapping_percentiles(period_data.map{|element| element[1]})
+      period_percentiles = get_bootstrapping_percentiles(period_data)
       period_factor = get_period_factor(period, period_data, period_percentiles, control_gap)
       period_percentiles.keys.each do |percentile|
         percentiles[percentile] += period_percentiles[percentile] * period_factor
@@ -135,16 +135,22 @@ class Bootstrapping
   def self.get_bootstrapping_samples(values, iterations)
     # give weight to values depending on how recent they are
     # using a magic number algorithm
-    weighted_values = []
-    counter, magic_number = 1, 1
-    while magic_number <= values.count
-      (1..magic_number).each do |index|
-        weighted_values.push(values[-index])
-      end
-      counter += 1
-      magic_number += counter
+    last_value_timestamp = values[-1][0].to_i
+    weighted_values = values.map do |element|
+      value_timestamp = element[0].to_i
+      time_proportion = value_timestamp / last_value_timestamp
+      time_factor = 1 / (1 + Math.log(time_proportion) / Math.log(0.994))
+      [element[1], time_factor]
     end
-    weighted_values.concat(values)
+    # counter, magic_number = 1, 1
+    # while magic_number <= values.count
+    #   (1..magic_number).each do |index|
+    #     weighted_values.push(values[-index])
+    #   end
+    #   counter += 1
+    #   magic_number += counter
+    # end
+    # weighted_values.concat(values)
     # create the samples
     samples = []
     iterations.times do
