@@ -135,7 +135,7 @@ class Bootstrapping
   def self.get_bootstrapping_samples(values, iterations)
     # give weight to values depending on how recent they are
     # using a magic number algorithm
-    magic_number = 0.95 #0.994
+    magic_number = 0.997
     last_value_timestamp = values[-1][0].to_i
     weighted_values = []
     values.each do |element|
