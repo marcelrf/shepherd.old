@@ -26,6 +26,6 @@ while($running) do
   scheduled = manager.schedule_new_checks(checks_to_do)
   Rails.logger.info "[#{Time.now.utc}] MANAGER: Scheduled #{scheduled} new checks."
   Rails.logger.info "[#{Time.now.utc}] MANAGER: Going to sleep."
-  sleep 60
+  sleep 20
 end
 Rails.logger.info "[#{Time.now.utc}] MANAGER: Dismissed, exiting."

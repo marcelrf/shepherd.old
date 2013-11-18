@@ -92,6 +92,7 @@ namespace :shepherd do
       metric.last_day_check = nil
       metric.last_week_check = nil
       metric.last_month_check = nil
+      metric.save!
     end
     $redis.flushall
     Observation.delete_all
