@@ -10,7 +10,7 @@ class Bootstrapping
     periods_to_analyze.each do |period_to_analyze|
       period_data = slice_control_data(control_data, period, period_to_analyze)
       period_percentiles = get_bootstrapping_percentiles(period_data)
-      period_factor = get_period_factor(period, period_data, period_percentiles, control_gap)
+      period_factor = get_period_factor(period_to_analyze, period_data, period_percentiles, control_gap)
       period_percentiles.keys.each do |percentile|
         percentiles[percentile] += period_percentiles[percentile] * period_factor
       end
@@ -135,12 +135,12 @@ class Bootstrapping
   def self.get_bootstrapping_samples(values, iterations)
     # give weight to values depending on how recent they are
     # using a magic number algorithm
-    magic_number = 0.994
+    magic_number = 0.95 #0.994
     last_value_timestamp = values[-1][0].to_i
     weighted_values = []
     values.each do |element|
       value_timestamp = element[0].to_i
-      time_proportion = value_timestamp / last_value_timestamp
+      time_proportion = value_timestamp / last_value_timestamp.to_f
       time_factor = 1 / (1 + Math.log(time_proportion) / Math.log(magic_number))
       (time_factor * 10).ceil.times do
         weighted_values.push(element[1])
@@ -173,9 +173,7 @@ class Bootstrapping
   end
 
   def self.get_confidence(count, max)
-    initial_factor = 2 * count / max.to_f - 1
-    sign = initial_factor < 0 ? -1 : 1
-    (initial_factor.abs ** 0.25 * sign + 1) / 2
+    count / max.to_f
   end
 
   def self.minimum_size(period)
