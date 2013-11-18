@@ -57,7 +57,7 @@ while($running) do
   else
     Rails.logger.warn "[#{Time.now.utc}] WORKER: Restarted #{restarted} crashed threads."
   end
-  sleep 60
+  sleep 20
 end
 
 # terminate all threads and exit
