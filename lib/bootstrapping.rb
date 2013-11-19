@@ -101,34 +101,34 @@ class Bootstrapping
         [value, freqs[value].to_f / sample.size]
       end
       accum_freq = 0
-      percentile05 = percentile50 = percentile95 = 0
+      percentile25 = percentile50 = percentile75 = 0
       relative_freqs.each do |value, rel_freq|
         new_accum_freq = accum_freq + rel_freq
-        if accum_freq < 0.05 && new_accum_freq >= 0.05
-          percentile05 = value
+        if accum_freq < 0.25 && new_accum_freq >= 0.25
+          percentile25 = value
         elsif accum_freq < 0.5 && new_accum_freq >= 0.5
           percentile50 = value
-        elsif accum_freq < 0.95 && new_accum_freq >= 0.95
-          percentile95 = value
+        elsif accum_freq < 0.75 && new_accum_freq >= 0.75
+          percentile75 = value
         end
         accum_freq = new_accum_freq
       end
-      [percentile05, percentile50, percentile95]
+      [percentile25, percentile50, percentile75]
     end
     # get percentile means
-    percentile05_accum = percentile50_accum = percentile95_accum = 0
+    percentile25_accum = percentile50_accum = percentile75_accum = 0
     percentiles.each do |percentile|
-      percentile05_accum += percentile[0]
+      percentile25_accum += percentile[0]
       percentile50_accum += percentile[1]
-      percentile95_accum += percentile[2]
+      percentile75_accum += percentile[2]
     end
-    percentile05_mean = percentile05_accum.to_f / percentiles.size
+    percentile25_mean = percentile25_accum.to_f / percentiles.size
     percentile50_mean = percentile50_accum.to_f / percentiles.size
-    percentile95_mean = percentile95_accum.to_f / percentiles.size
+    percentile75_mean = percentile75_accum.to_f / percentiles.size
     {
-      'low' => percentile05_mean,
+      'low' => percentile25_mean,
       'median' => percentile50_mean,
-      'high' => percentile95_mean,
+      'high' => percentile75_mean,
     }
   end
 
