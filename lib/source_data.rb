@@ -11,11 +11,18 @@ class SourceData
     # adapt time range representation to librato format
     # who considers both start date and end date as inclusive
     start_time += 1.hour
+    cache_data, start_time = get_cache_data(metric, start_time, end_time)
+    # initialize source data
+    source_data = {}
+    index_time = start_time
+    while index_time <= end_time
+      source_data[index_time] = 0
+      index_time += 1.hour
+    end
+    source_info = metric.source_info
     # librato only accepts periods up to 1 hour
     # and queries up to 100 elements
     intervals = divide_time_range(start_time, end_time, 'hour', 100)
-    source_info = metric.source_info
-    source_data = Hash.new{|hash, key| hash[key] = 0}
     intervals.each do |interval_start, interval_end|
       url = 'https://metrics-api.librato.com/v1/'
       url += "metrics/#{source_info['metric']}"
@@ -31,7 +38,35 @@ class SourceData
         end
       end
     end
-    group_data_by_period(source_data.to_a, period)
+    full_source_data = cache_data + source_data.to_a
+    set_cache_data(metric, full_source_data)
+    group_data_by_period(full_source_data, period)
+  end
+
+  def self.get_cache_data(metric, start_time, end_time)
+    useless_cache_data = [[], start_time]
+    cache_data_json = $redis.hget('source_data', metric.id)
+    if cache_data_json
+      cache_data = JSON.load(cache_data_json).map do |element|
+        [Time.parse(element[0], @@TIME_FORMAT).utc, element[1]]
+      end
+      if cache_data[0][0] <= start_time
+        cache_data.pop while cache_data[-1][0] > end_time
+        [cache_data, cache_data[-1][0] + 1.hour]
+      else
+        useless_cache_data
+      end
+    else
+      useless_cache_data
+    end
+  end
+
+  def self.set_cache_data(metric, data)
+    formatted_data = data.map do |element|
+      [element[0].strftime(@@TIME_FORMAT), element[1]]
+    end
+    data_json = JSON.dump(formatted_data)
+    $redis.hset('source_data', metric.id, data_json)
   end
 
   def self.get_time_range(metric, check_start, period)
