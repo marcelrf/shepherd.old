@@ -7,6 +7,8 @@ class SourceData
   end
 
   def self.get_source_data_from_librato(metric, check_start, period)
+    # TODO: REMOVE THIS LINE (provisory bug patch)
+    check_start -= 1.hours
     start_time, end_time = get_time_range(metric, check_start, period)
     # adapt time range representation to librato format
     # who considers both start date and end date as inclusive
