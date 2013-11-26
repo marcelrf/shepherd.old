@@ -11,6 +11,7 @@ class Bootstrapping
       period_data = slice_control_data(control_data, period, period_to_analyze)
       period_percentiles = get_bootstrapping_percentiles(period_data)
       period_factor = get_period_factor(period_to_analyze, period_data, period_percentiles, control_gap)
+      puts period_to_analyze, period_percentiles, period_factor
       period_percentiles.keys.each do |percentile|
         percentiles[percentile] += period_percentiles[percentile] * period_factor
       end
@@ -101,41 +102,41 @@ class Bootstrapping
         [value, freqs[value].to_f / sample.size]
       end
       accum_freq = 0
-      percentile25 = percentile50 = percentile75 = 0
+      percentile15 = percentile50 = percentile85 = 0
       relative_freqs.each do |value, rel_freq|
         new_accum_freq = accum_freq + rel_freq
-        if accum_freq < 0.25 && new_accum_freq >= 0.25
-          percentile25 = value
+        if accum_freq < 0.15 && new_accum_freq >= 0.15
+          percentile15 = value
         elsif accum_freq < 0.5 && new_accum_freq >= 0.5
           percentile50 = value
-        elsif accum_freq < 0.75 && new_accum_freq >= 0.75
-          percentile75 = value
+        elsif accum_freq < 0.85 && new_accum_freq >= 0.85
+          percentile85 = value
         end
         accum_freq = new_accum_freq
       end
-      [percentile25, percentile50, percentile75]
+      [percentile15, percentile50, percentile85]
     end
     # get percentile means
-    percentile25_accum = percentile50_accum = percentile75_accum = 0
+    percentile15_accum = percentile50_accum = percentile85_accum = 0
     percentiles.each do |percentile|
-      percentile25_accum += percentile[0]
+      percentile15_accum += percentile[0]
       percentile50_accum += percentile[1]
-      percentile75_accum += percentile[2]
+      percentile85_accum += percentile[2]
     end
-    percentile25_mean = percentile25_accum.to_f / percentiles.size
+    percentile15_mean = percentile15_accum.to_f / percentiles.size
     percentile50_mean = percentile50_accum.to_f / percentiles.size
-    percentile75_mean = percentile75_accum.to_f / percentiles.size
+    percentile85_mean = percentile85_accum.to_f / percentiles.size
     {
-      'low' => percentile25_mean,
+      'low' => percentile15_mean,
       'median' => percentile50_mean,
-      'high' => percentile75_mean,
+      'high' => percentile85_mean,
     }
   end
 
   def self.get_bootstrapping_samples(values, iterations)
     # give weight to values depending on how recent they are
     # using a magic number algorithm
-    magic_number = 0.9955
+    magic_number = 0.996
     last_value_timestamp = values[-1][0].to_i
     weighted_values = []
     values.each do |element|
@@ -169,7 +170,7 @@ class Bootstrapping
       confidence = get_confidence(data.count, 24)
     end
     compactness = 1 - (percentiles['high'] - percentiles['low']) / gap
-    (confidence * compactness) ** 3
+    (confidence * compactness) ** 20
   end
 
   def self.get_confidence(count, max)
