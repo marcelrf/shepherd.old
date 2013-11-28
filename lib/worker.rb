@@ -44,7 +44,6 @@ class Worker
   end
 
   def execute_check(check_json)
-    Rails.logger.info "START execute_check #{check_json}"
     check = json_to_check(check_json)
     source_data = SourceData.get_source_data(check['metric'], check['start'], check['period'])
     analysis = Bootstrapping.get_bootstrapping_analysis(source_data, check['period'])
@@ -54,7 +53,6 @@ class Worker
       end
       $redis.sadd('done_checks', check_json)
     end
-    Rails.logger.info "END execute_check #{check_json}"
   end
 
   def json_to_check(check_json)
