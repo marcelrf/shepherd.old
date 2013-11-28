@@ -13,7 +13,7 @@ class SourceData
     # adapt time range representation to librato format
     # who considers both start date and end date as inclusive
     start_time += 1.hour
-    cache_data, start_time = get_cache_data(metric, start_time, end_time)
+    ### cache_data, start_time = get_cache_data(metric, start_time, end_time)
     # initialize source data
     source_data = {}
     index_time = start_time
@@ -40,9 +40,9 @@ class SourceData
         end
       end
     end
-    full_source_data = cache_data + source_data.to_a
-    set_cache_data(metric, full_source_data)
-    group_data_by_period(full_source_data, period)
+    ### full_source_data = cache_data + source_data.to_a
+    ### set_cache_data(metric, full_source_data)
+    group_data_by_period(source_data.to_a, period) ###
   end
 
   def self.get_cache_data(metric, start_time, end_time)
