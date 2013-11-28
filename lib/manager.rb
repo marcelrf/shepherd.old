@@ -29,68 +29,49 @@ class Manager
   end
 
   def process_done_checks(done_checks)
-    Rails.logger.info "BUG 1 #{done_checks}"
     registered, observed = register_done_checks(done_checks)
-    Rails.logger.info "BUG 2 #{registered} #{observed}"
     remove_check_data(done_checks)
-    Rails.logger.info "BUG 3"
     [registered, observed]
   end
 
   def register_done_checks(done_checks)
-    Rails.logger.info "BUG 3"
     registered, observed = 0, 0
     done_checks.each do |check_json|
-    Rails.logger.info "BUG 4"
       check = json_to_check(check_json)
-    Rails.logger.info "BUG 5"
       metric = check['metric']
       if metric
-    Rails.logger.info "BUG 6"
       # update metric last check
         check_start = check['start']
         check_period = check['period']
         field_name = "last_#{check_period}_check"
         last_period_check = metric.send(field_name)
         if !last_period_check || last_period_check < check_start
-    Rails.logger.info "BUG 7"
           metric.send(field_name + '=', check_start)
           registered += 1
         end
-    Rails.logger.info "BUG 8"
         # create observation if needed
         observation_json = $redis.hget('observations', check_json)
         if observation_json
-    Rails.logger.info "BUG 9"
           observation = Observation.where(
             :metric_id => metric.id,
             :start => check_start,
             :period => check_period
           )[0]
-    Rails.logger.info "BUG 10"
           unless observation
-    Rails.logger.info "BUG 101"
-    Rails.logger.info "BUG >>>>>>>>>>>>>> #{observation_json}"
             observation_info = JSON.parse(observation_json)
-    Rails.logger.info "BUG 102"
             observation_info['metric'] = metric
             observation_info['start'] = check_start
             observation_info['period'] = check_period
-    Rails.logger.info "BUG 103"
             observation = Observation.new(observation_info)
-    Rails.logger.info "BUG 104"
             observed += 1
           end
         end
-    Rails.logger.info "BUG 11"
         ActiveRecord::Base.transaction do
           metric.save!
           observation.save! if observation_json
         end
-    Rails.logger.info "BUG 12"
       end
     end
-    Rails.logger.info "BUG 13"
     [registered, observed]
   end
 
@@ -158,7 +139,6 @@ class Manager
         scheduled_at = $redis.hget('scheduled_at', check_json)
         unless scheduled_at && Time.strptime(scheduled_at, @@TIME_FORMAT) > now - @@MAX_SCHEDULED_TIME
           queue_key = get_queue_key(check)
-          Rails.logger.info "QUEUE_KEY #{queue_key}"
           $redis.multi do
             $redis.lpush(queue_key, check_json)
             $redis.hset('metrics', check_json, check['metric'].to_hash.to_json)

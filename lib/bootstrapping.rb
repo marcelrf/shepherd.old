@@ -1,4 +1,6 @@
 class Bootstrapping
+  @@MAX_DIVERGENCE = 100
+
   def self.get_bootstrapping_analysis(data, period)
     control_data, current_data = data[0...-1], data[-1]
     return nil if control_data.size < minimum_size(period)
@@ -11,7 +13,6 @@ class Bootstrapping
       period_data = slice_control_data(control_data, period, period_to_analyze)
       period_percentiles = get_bootstrapping_percentiles(period_data)
       period_factor = get_period_factor(period_to_analyze, period_data, period_percentiles, control_gap)
-      puts period_to_analyze, period_percentiles, period_factor
       period_percentiles.keys.each do |percentile|
         percentiles[percentile] += period_percentiles[percentile] * period_factor
       end
@@ -22,14 +23,16 @@ class Bootstrapping
     end
     difference = current_data[1] - percentiles['median']
     if difference > 0
-      divergence = difference / (percentiles['high'] - percentiles['median'])
-    elsif difference < 0 
-      divergence = -difference / (percentiles['low'] - percentiles['median'])
+      base = percentiles['high'] - percentiles['median']
+      divergence = base != 0 ? difference / base : @@MAX_DIVERGENCE
+    elsif difference < 0
+      base = percentiles['low'] - percentiles['median']
+      divergence = base != 0 ? -difference / base : @@MAX_DIVERGENCE
     else
       divergence = 0
     end
     percentiles['value'] = current_data[1]
-    percentiles['divergence'] = divergence
+    percentiles['divergence'] = [divergence, @@MAX_DIVERGENCE].min
     percentiles
   end
 
@@ -107,9 +110,11 @@ class Bootstrapping
         new_accum_freq = accum_freq + rel_freq
         if accum_freq < 0.15 && new_accum_freq >= 0.15
           percentile15 = value
-        elsif accum_freq < 0.5 && new_accum_freq >= 0.5
+        end
+        if accum_freq < 0.5 && new_accum_freq >= 0.5
           percentile50 = value
-        elsif accum_freq < 0.85 && new_accum_freq >= 0.85
+        end
+        if accum_freq < 0.85 && new_accum_freq >= 0.85
           percentile85 = value
         end
         accum_freq = new_accum_freq
@@ -169,7 +174,11 @@ class Bootstrapping
     elsif period == 'month'
       confidence = get_confidence(data.count, 24)
     end
-    compactness = 1 - (percentiles['high'] - percentiles['low']) / gap
+    if gap == 0
+      compactness = 1
+    else
+      compactness = 1 - (percentiles['high'] - percentiles['low']) / gap
+    end
     (confidence * compactness) ** 20
   end
 
