@@ -9,6 +9,7 @@ class CreateObservations < ActiveRecord::Migration
       t.float :high
       t.float :value
       t.float :divergence
+      t.string :data
 
       t.timestamps
     end

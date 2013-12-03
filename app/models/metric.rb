@@ -1,42 +1,18 @@
 class Metric < ActiveRecord::Base
-  attr_accessible :name, :tags, :source_info, :polarity, :check_every_hour, :check_every_day, :check_every_week, :check_every_month, :hour_check_delay, :day_check_delay, :week_check_delay, :month_check_delay, :last_hour_check, :last_day_check, :last_week_check, :last_month_check, :data_start, :enabled
+  attr_accessible :name, :source_info, :polarity, :check_every, :check_delay
   has_many :observations
 
   validates :name, :presence => true, :length => { :minimum => 2 }
-  validates :tags, :format => { :with => /\A([^,]+(,[^,]+)*)?\z/ }
   validates :polarity, :presence => true, inclusion: { :in =>  %w(positive negative) }
-  validates :hour_check_delay, :numericality => { :only_integer => true, :greater_than_or_equal_to => 0}, :allow_nil => true
-  validates :day_check_delay, :numericality => { :only_integer => true, :greater_than_or_equal_to => 0}, :allow_nil => true
-  validates :week_check_delay, :numericality => { :only_integer => true, :greater_than_or_equal_to => 0}, :allow_nil => true
-  validates :month_check_delay, :numericality => { :only_integer => true, :greater_than_or_equal_to => 0}, :allow_nil => true
-  validates :last_hour_check, :timeliness => { :type => :time }, :allow_nil => true
-  validates :last_day_check, :timeliness => { :type => :time }, :allow_nil => true
-  validates :last_week_check, :timeliness => { :type => :time }, :allow_nil => true
-  validates :last_month_check, :timeliness => { :type => :time }, :allow_nil => true
-  validates :data_start, :presence => true, :timeliness => { :type => :time }
+  validates :check_every, :presence => true, inclusion: { :in =>  %w(hour day week month) }
+  validates :check_delay, :numericality => { :only_integer => true, :greater_than_or_equal_to => 0}, :allow_nil => true
 
-  def check_every
-    checks = []
-    checks.push('hour') if self.check_every_hour
-    checks.push('day') if self.check_every_day
-    checks.push('week') if self.check_every_week
-    checks.push('month') if self.check_every_month
-    checks
+  def get_source_info
+    JSON.load(self['source_info'])
   end
 
-  def last_check
-    last_checks = [
-      self.last_hour_check,
-      self.last_day_check,
-      self.last_week_check,
-      self.last_month_check
-    ]
-    last_checks.select{|timestamp| timestamp}.max
-  end
-
-  def source_info
-    source_info_json = self['source_info']
-    JSON.parse(source_info_json)
+  def set_source_info(source_info)
+    self['source_info'] = JSON.dump(source_info)
   end
 
   def to_hash

@@ -7,13 +7,14 @@ class SourceData
   end
 
   def self.get_source_data_from_librato(metric, check_start, period)
+    Rails.logger.info "GET DATA #{metric.name} #{check_start} #{period}"
     # TODO: REMOVE THIS LINE (provisory bug patch)
     check_start -= 1.hours
     start_time, end_time = get_time_range(metric, check_start, period)
     # adapt time range representation to librato format
     # who considers both start date and end date as inclusive
     start_time += 1.hour
-    ### cache_data, start_time = get_cache_data(metric, start_time, end_time)
+    cache_data, start_time = get_cache_data(metric, start_time, end_time, period)
     # initialize source data
     source_data = {}
     index_time = start_time
@@ -40,35 +41,47 @@ class SourceData
         end
       end
     end
-    ### full_source_data = cache_data + source_data.to_a
-    ### set_cache_data(metric, full_source_data)
-    group_data_by_period(source_data.to_a, period) ###
+    grouped_data = group_data_by_period(source_data.to_a, period)
+    full_source_data = cache_data + grouped_data
+    set_cache_data(metric, period, full_source_data)
+    Rails.logger.info "END GET DATA #{metric.name} #{check_start} #{period}"
+    full_source_data
   end
 
-  def self.get_cache_data(metric, start_time, end_time)
-    useless_cache_data = [[], start_time]
-    cache_data_json = $redis.hget('source_data', metric.id)
+  def self.get_cache_data(metric, start_time, end_time, period)
+    no_cache_data = [[], start_time]
+    return no_cache_data #############################################
+    cache_key = JSON.dump({
+      'metric' => metric.id,
+      'period' => period
+    })
+    cache_data_json = $redis.hget('source_data', cache_key)
     if cache_data_json
       cache_data = JSON.load(cache_data_json).map do |element|
         [Time.parse(element[0], @@TIME_FORMAT).utc, element[1]]
       end
       if cache_data[0][0] <= start_time
+        cache_data.shift while cache_data[0][0] < start_time
         cache_data.pop while cache_data[-1][0] > end_time
-        [cache_data, cache_data[-1][0] + 1.hour]
+        [cache_data, cache_data[-1][0] + 1.send(period)]
       else
-        useless_cache_data
+        no_cache_data
       end
     else
-      useless_cache_data
+      no_cache_data
     end
   end
 
-  def self.set_cache_data(metric, data)
+  def self.set_cache_data(metric, period, data)
+    cache_key = JSON.dump({
+      'metric' => metric.id,
+      'period' => period
+    })
     formatted_data = data.map do |element|
       [element[0].strftime(@@TIME_FORMAT), element[1]]
     end
     data_json = JSON.dump(formatted_data)
-    $redis.hset('source_data', metric.id, data_json)
+    $redis.hset('source_data', cache_key, data_json)
   end
 
   def self.get_time_range(metric, check_start, period)
