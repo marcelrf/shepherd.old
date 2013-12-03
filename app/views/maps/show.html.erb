@@ -3,22 +3,26 @@
   rows = (@metric_infos.count / columns.to_f).ceil
   table_size = 600
   cell_size = (table_size / columns.to_f).floor
-  def cell_color(state)
+  def cell_color(metric, state)
     max_divergence = 5.0
-    if !state || state.divergence == 0
+    if !metric
+      "#F0F0F0"
+    elsif !state || state.divergence == 0
       "#FFFFFF"
     elsif state.divergence > 0
-      red_blue = (377 - ([state.divergence, max_divergence].min / max_divergence) ** 0.6 * 377).to_i.to_s(16)
+      red_blue = (377 - ([state.divergence, max_divergence].min / max_divergence) ** 0.7 * 377).to_i.to_s(16)
       red_blue = "0#{red_blue}" if red_blue.size == 1
       "##{red_blue}FF#{red_blue}"
     else
-      green_blue = (377 - ([-state.divergence, max_divergence].min / max_divergence) ** 0.6 * 377).to_i.to_s(16)
+      green_blue = (377 - ([-state.divergence, max_divergence].min / max_divergence) ** 0.7 * 377).to_i.to_s(16)
       green_blue = "0#{green_blue}" if green_blue.size == 1
       "#FF#{green_blue}#{green_blue}"
     end
   end
-  def format_divergence(state)
-    if state
+  def format_divergence(metric, state)
+    if !metric
+      nil
+    elsif state
       if state.divergence >= 0
         "+#{state.divergence}"
       else
@@ -35,11 +39,13 @@
   <tr>
   <% columns.times do %>
     <% metric, state = @metric_infos.shift %>
-    <td style="width:<%= cell_size %>px;height:<%= cell_size %>px;background-color:<%= cell_color(state) %>"
+    <td style="width:<%= cell_size %>px;height:<%= cell_size %>px;background-color:<%= cell_color(metric, state) %>"
+      <% if metric %>
         title="<%= metric.name %>
-<%= state.start %>
-<%= state.period %>
-<%= format_divergence(state) %>">
+<%= state ? state.start : '' %>
+<%= state ? state.period : '' %>
+<%= format_divergence(metric, state) %>"
+      <% end %> >
     </td>
   <% end %>
   </tr>
