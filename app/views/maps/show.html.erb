@@ -1,19 +1,31 @@
 <%
-  columns = Math.sqrt(@metric_info.count).ceil
-  rows = (@metric_info.count / columns.to_f).ceil
+  columns = Math.sqrt(@metric_infos.count).ceil
+  rows = (@metric_infos.count / columns.to_f).ceil
   table_size = 600
   cell_size = (table_size / columns.to_f).floor
-  def cell_color(divergence)
-    if !divergence || divergence == 0
+  def cell_color(state)
+    max_divergence = 5.0
+    if !state || state.divergence == 0
       "#FFFFFF"
-    elsif divergence > 0
-      red_blue = (377 - ([divergence, 10].min / 10.0) ** 0.6 * 377).to_i.to_s(16)
+    elsif state.divergence > 0
+      red_blue = (377 - ([state.divergence, max_divergence].min / max_divergence) ** 0.6 * 377).to_i.to_s(16)
       red_blue = "0#{red_blue}" if red_blue.size == 1
       "##{red_blue}FF#{red_blue}"
     else
-      green_blue = (377 - ([-divergence, 10].min / 10.0) ** 0.6 * 377).to_i.to_s(16)
+      green_blue = (377 - ([-state.divergence, max_divergence].min / max_divergence) ** 0.6 * 377).to_i.to_s(16)
       green_blue = "0#{green_blue}" if green_blue.size == 1
       "#FF#{green_blue}#{green_blue}"
+    end
+  end
+  def format_divergence(state)
+    if state
+      if state.divergence >= 0
+        "+#{state.divergence}"
+      else
+        "-#{state.divergence}"
+      end
+    else
+      "Still no data"
     end
   end
 %>
@@ -22,10 +34,12 @@
 <% rows.times do %>
   <tr>
   <% columns.times do %>
-    <% name, divergence = @metric_info.shift %>
-    <td style="width:<%= cell_size %>px;height:<%= cell_size %>px;background-color:<%= cell_color(divergence) %>"
-        title="<%= name %>
-<%= divergence && divergence != 0 ? (divergence > 0 ? "+#{divergence}" : "-#{divergence}") : "within expected" %>">
+    <% metric, state = @metric_infos.shift %>
+    <td style="width:<%= cell_size %>px;height:<%= cell_size %>px;background-color:<%= cell_color(state) %>"
+        title="<%= metric.name %>
+<%= state.start %>
+<%= state.period %>
+<%= format_divergence(state) %>">
     </td>
   <% end %>
   </tr>

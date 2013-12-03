@@ -39,23 +39,23 @@ class Bootstrapping
   def self.slice_control_data(base_data, base_period, target_period)
     if base_period == 'hour'
       if target_period == 'hour'
-        base_data.reverse[0...2000].reverse
+        base_data
       elsif target_period == 'day'
         slices = base_data.reverse.each_slice(24)
         slices = slices.select{|slice| slice.size == 24}
-        slices.map{|slice| slice[-1]}[0...90].reverse
+        slices.map{|slice| slice[-1]}.reverse
       elsif target_period == 'week'
         slices = base_data.reverse.each_slice(168)
         slices = slices.select{|slice| slice.size == 168}
-        slices.map{|slice| slice[-1]}[0...12].reverse
+        slices.map{|slice| slice[-1]}.reverse
       end
     elsif base_period == 'day'
       if target_period == 'day'
-        base_data.reverse[0...720].reverse
+        base_data
       elsif target_period == 'week'
         slices = base_data.reverse.each_slice(7)
         slices = slices.select{|slice| slice.size == 7}
-        slices.map{|slice| slice[-1]}[0...100].reverse
+        slices.map{|slice| slice[-1]}.reverse
       elsif target_period == 'month'
         current_day = base_data[-1][0] + 1.day
         months_ago = 1
@@ -72,7 +72,7 @@ class Bootstrapping
       end
     elsif base_period == 'week'
       if target_period == 'week'
-        base_data.reverse[0...100].reverse
+        base_data
       elsif target_period == 'month'
         current_week = base_data[-1][0] + 1.week
         months_ago = 1
@@ -89,7 +89,7 @@ class Bootstrapping
         sliced_data.reverse
       end
     elsif base_period == 'month'
-      base_data.reverse[0...24].reverse
+      base_data
     end
   end
 
@@ -105,43 +105,43 @@ class Bootstrapping
         [value, freqs[value].to_f / sample.size]
       end
       accum_freq = 0
-      percentile15 = percentile50 = percentile85 = 0
+      percentile10 = percentile50 = percentile90 = 0
       relative_freqs.each do |value, rel_freq|
         new_accum_freq = accum_freq + rel_freq
-        if accum_freq < 0.15 && new_accum_freq >= 0.15
-          percentile15 = value
+        if accum_freq < 0.10 && new_accum_freq >= 0.10
+          percentile10 = value
         end
         if accum_freq < 0.5 && new_accum_freq >= 0.5
           percentile50 = value
         end
-        if accum_freq < 0.85 && new_accum_freq >= 0.85
-          percentile85 = value
+        if accum_freq < 0.90 && new_accum_freq >= 0.90
+          percentile90 = value
         end
         accum_freq = new_accum_freq
       end
-      [percentile15, percentile50, percentile85]
+      [percentile10, percentile50, percentile90]
     end
     # get percentile means
-    percentile15_accum = percentile50_accum = percentile85_accum = 0
+    percentile10_accum = percentile50_accum = percentile90_accum = 0
     percentiles.each do |percentile|
-      percentile15_accum += percentile[0]
+      percentile10_accum += percentile[0]
       percentile50_accum += percentile[1]
-      percentile85_accum += percentile[2]
+      percentile90_accum += percentile[2]
     end
-    percentile15_mean = percentile15_accum.to_f / percentiles.size
+    percentile10_mean = percentile10_accum.to_f / percentiles.size
     percentile50_mean = percentile50_accum.to_f / percentiles.size
-    percentile85_mean = percentile85_accum.to_f / percentiles.size
+    percentile90_mean = percentile90_accum.to_f / percentiles.size
     {
-      'low' => percentile15_mean,
+      'low' => percentile10_mean,
       'median' => percentile50_mean,
-      'high' => percentile85_mean,
+      'high' => percentile90_mean,
     }
   end
 
   def self.get_bootstrapping_samples(values, iterations)
     # give weight to values depending on how recent they are
     # using a magic number algorithm
-    magic_number = 0.995
+    magic_number = 0.996
     last_value_timestamp = values[-1][0].to_i
     weighted_values = []
     values.each do |element|
@@ -165,16 +165,15 @@ class Bootstrapping
   end
 
   def self.get_period_factor(period, data, percentiles, gap)
-    # if period == 'hour'
-    #   confidence = get_confidence(data.count, )
-    # elsif period == 'day'
-    #   confidence = get_confidence(data.count, 30)
-    # elsif period == 'week'
-    #   confidence = get_confidence(data.count, 26)
-    # elsif period == 'month'
-    #   confidence = get_confidence(data.count, 24)
-    # end
-    confidence = 1.0
+    if period == 'hour'
+      confidence = get_confidence(data.count, 2160) # 3 months
+    elsif period == 'day'
+      confidence = get_confidence(data.count, 360) # 12 months
+    elsif period == 'week'
+      confidence = get_confidence(data.count, 104) # 24 months
+    elsif period == 'month'
+      confidence = get_confidence(data.count, 24) # 24 months
+    end
     if gap == 0
       compactness = 1.0
     else
@@ -183,9 +182,9 @@ class Bootstrapping
     (confidence * compactness) ** 10
   end
 
-  # def self.get_confidence(count, max)
-  #   count / max.to_f
-  # end
+  def self.get_confidence(count, max)
+    count / max.to_f
+  end
 
   def self.minimum_size(period)
     if period == 'hour'
@@ -193,7 +192,7 @@ class Bootstrapping
     elsif period == 'day'
       30
     elsif period == 'week'
-      10
+      12
     elsif period == 'month'
       6
     end

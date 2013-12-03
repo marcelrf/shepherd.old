@@ -50,7 +50,7 @@ ActiveRecord::Schema.define(:version => 20130705215208) do
     t.string   "name"
     t.text     "source_info"
     t.string   "polarity"
-    t.boolean  "check_every"
+    t.string   "check_every"
     t.integer  "check_delay"
     t.datetime "created_at",  :null => false
     t.datetime "updated_at",  :null => false

@@ -49,6 +49,7 @@ while($running) do
           sleep 10
         end
       }
+      sleep 1
       @@threads[thread] = queue
       restarted += 1
     end
