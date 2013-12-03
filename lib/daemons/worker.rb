@@ -28,6 +28,7 @@ queue_workers.each do |queue, workers|
         sleep 10
       end
     }
+    sleep 1
     @@threads[thread] = queue
   end
 end
