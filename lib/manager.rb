@@ -29,50 +29,36 @@ class Manager
   end
 
   def process_done_checks(done_checks)
-    registered, observed = register_done_checks(done_checks)
+    registered = register_done_checks(done_checks)
     remove_check_data(done_checks)
-    [registered, observed]
+    registered
   end
 
   def register_done_checks(done_checks)
-    registered, observed = 0, 0
+    registered = 0
     done_checks.each do |check_json|
       check = json_to_check(check_json)
       metric = check['metric']
       if metric
-      # update metric last check
-        check_start = check['start']
-        check_period = check['period']
-        field_name = "last_#{check_period}_check"
-        last_period_check = metric.send(field_name)
-        if !last_period_check || last_period_check < check_start
-          metric.send(field_name + '=', check_start)
-          registered += 1
-        end
-        # create observation if needed
+        # get observation data
         observation_json = $redis.hget('observations', check_json)
         if observation_json
+          observation_info = JSON.parse(observation_json)
+          observation_info['metric'] = metric
+          observation_info['start'] = check_start
+          observation_info['period'] = check_period
+          # create or update metric observation
           observation = Observation.where(
             :metric_id => metric.id,
             :start => check_start,
             :period => check_period
-          )[0]
-          unless observation
-            observation_info = JSON.parse(observation_json)
-            observation_info['metric'] = metric
-            observation_info['start'] = check_start
-            observation_info['period'] = check_period
-            observation = Observation.new(observation_info)
-            observed += 1
-          end
-        end
-        ActiveRecord::Base.transaction do
-          metric.save!
-          observation.save! if observation_json
+          )[0] || Observation.new
+          updated = observation.update_attributes(observation_info)
+          registered += 1 if updated
         end
       end
     end
-    [registered, observed]
+    registered
   end
 
   def remove_check_data(done_checks)
@@ -97,14 +83,20 @@ class Manager
   def get_new_checks
     now = Time.now.utc
     checks = []
-    metrics = Metric.where('enabled' => true)
+    metrics = Metric.all
     metrics.each do |metric|
-      metric.check_every.each do |period|
-        delayed_now = now - metric.send("#{period}_check_delay") * 1.minute
+      metric.periods.each do |period|
+        delayed_now = now - metric.check_delay * 1.minute
         max_check_end = crop_time(delayed_now, period)
         period_time = 1.send(period)
         last_check = metric.send("last_#{period}_check")
         check_start = last_check ? last_check + period_time : max_check_end - period_time
+        
+        last_observation = Observation.where(:metric_id => metric.id, :period => period)[0]
+        if last_observation
+          <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        else
+          
         if check_start < max_check_end
           checks.push({
             'metric' => metric,

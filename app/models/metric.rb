@@ -15,6 +15,12 @@ class Metric < ActiveRecord::Base
     self['source_info'] = JSON.dump(source_info)
   end
 
+  def periods
+    all_periods = ['hour', 'day', 'week', 'month']
+    metric_period_index = all_periods.index(self['period'])
+    all_periods[metric_period_index..-1]
+  end
+
   def to_hash
     metric_json = self.to_json
     metric_info = JSON.load(metric_json)
