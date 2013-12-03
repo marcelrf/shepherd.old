@@ -39,23 +39,23 @@ class Bootstrapping
   def self.slice_control_data(base_data, base_period, target_period)
     if base_period == 'hour'
       if target_period == 'hour'
-        base_data.reverse[0...24].reverse
+        base_data.reverse[0...2000].reverse
       elsif target_period == 'day'
         slices = base_data.reverse.each_slice(24)
         slices = slices.select{|slice| slice.size == 24}
-        slices.map{|slice| slice[-1]}[0...30].reverse
+        slices.map{|slice| slice[-1]}[0...90].reverse
       elsif target_period == 'week'
         slices = base_data.reverse.each_slice(168)
         slices = slices.select{|slice| slice.size == 168}
-        slices.map{|slice| slice[-1]}[0...26].reverse
+        slices.map{|slice| slice[-1]}[0...12].reverse
       end
     elsif base_period == 'day'
       if target_period == 'day'
-        base_data.reverse[0...30].reverse
+        base_data.reverse[0...720].reverse
       elsif target_period == 'week'
         slices = base_data.reverse.each_slice(7)
         slices = slices.select{|slice| slice.size == 7}
-        slices.map{|slice| slice[-1]}[0...26].reverse
+        slices.map{|slice| slice[-1]}[0...100].reverse
       elsif target_period == 'month'
         current_day = base_data[-1][0] + 1.day
         months_ago = 1
@@ -72,7 +72,7 @@ class Bootstrapping
       end
     elsif base_period == 'week'
       if target_period == 'week'
-        base_data.reverse[0...26].reverse
+        base_data.reverse[0...100].reverse
       elsif target_period == 'month'
         current_week = base_data[-1][0] + 1.week
         months_ago = 1
@@ -141,7 +141,7 @@ class Bootstrapping
   def self.get_bootstrapping_samples(values, iterations)
     # give weight to values depending on how recent they are
     # using a magic number algorithm
-    magic_number = 0.996
+    magic_number = 0.995
     last_value_timestamp = values[-1][0].to_i
     weighted_values = []
     values.each do |element|
@@ -165,26 +165,27 @@ class Bootstrapping
   end
 
   def self.get_period_factor(period, data, percentiles, gap)
-    if period == 'hour'
-      confidence = get_confidence(data.count, 24)
-    elsif period == 'day'
-      confidence = get_confidence(data.count, 30)
-    elsif period == 'week'
-      confidence = get_confidence(data.count, 26)
-    elsif period == 'month'
-      confidence = get_confidence(data.count, 24)
-    end
+    # if period == 'hour'
+    #   confidence = get_confidence(data.count, )
+    # elsif period == 'day'
+    #   confidence = get_confidence(data.count, 30)
+    # elsif period == 'week'
+    #   confidence = get_confidence(data.count, 26)
+    # elsif period == 'month'
+    #   confidence = get_confidence(data.count, 24)
+    # end
+    confidence = 1.0
     if gap == 0
-      compactness = 1
+      compactness = 1.0
     else
-      compactness = 1 - (percentiles['high'] - percentiles['low']) / gap
+      compactness = 1.0 - (percentiles['high'] - percentiles['low']) / gap
     end
-    (confidence * compactness) ** 20
+    (confidence * compactness) ** 10
   end
 
-  def self.get_confidence(count, max)
-    count / max.to_f
-  end
+  # def self.get_confidence(count, max)
+  #   count / max.to_f
+  # end
 
   def self.minimum_size(period)
     if period == 'hour'

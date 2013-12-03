@@ -2,23 +2,10 @@ class CreateMetrics < ActiveRecord::Migration
   def change
     create_table :metrics do |t|
       t.string :name
-      t.text :tags
       t.text :source_info
       t.string :polarity
-      t.boolean :check_every_hour
-      t.boolean :check_every_day
-      t.boolean :check_every_week
-      t.boolean :check_every_month
-      t.integer :hour_check_delay
-      t.integer :day_check_delay
-      t.integer :week_check_delay
-      t.integer :month_check_delay
-      t.datetime :last_hour_check
-      t.datetime :last_day_check
-      t.datetime :last_week_check
-      t.datetime :last_month_check
-      t.datetime :data_start
-      t.boolean :enabled
+      t.boolean :check_every
+      t.integer :check_delay
 
       t.timestamps
     end

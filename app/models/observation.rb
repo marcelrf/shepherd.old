@@ -1,5 +1,5 @@
 class Observation < ActiveRecord::Base
-  attr_accessible :metric, :start, :period, :low, :median, :high, :value, :divergence
+  attr_accessible :metric, :start, :period, :low, :median, :high, :value, :divergence, :data
   belongs_to :metric
 
   validates_associated :metric

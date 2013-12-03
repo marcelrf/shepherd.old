@@ -19,9 +19,8 @@ Rails.logger.info "[#{Time.now.utc}] MANAGER: Summoned."
 while($running) do
   Rails.logger.info "[#{Time.now.utc}] MANAGER: Starting main loop."
   checks_to_do, done_checks = manager.get_scheduled_checks
-  registered, observed = manager.process_done_checks(done_checks)
+  registered = manager.process_done_checks(done_checks)
   Rails.logger.info "[#{Time.now.utc}] MANAGER: Registered #{registered} done checks."
-  Rails.logger.info "[#{Time.now.utc}] MANAGER: Created #{observed} observations."
   scheduled = manager.schedule_new_checks(checks_to_do)
   Rails.logger.info "[#{Time.now.utc}] MANAGER: Scheduled #{scheduled} new checks."
   Rails.logger.info "[#{Time.now.utc}] MANAGER: Going to sleep."
