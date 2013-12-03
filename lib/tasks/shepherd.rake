@@ -9,25 +9,17 @@ namespace :shepherd do
       existing = Metric.where('name' => metric_name)
       if existing.count == 0
         puts "Watching #{metric_name}"
-        Metric.create!(
+        Metric.create(
           :name => metric_name,
           :polarity => polarity,
-          :check_every_hour => true,
-          :check_every_day => true,
-          :check_every_week => true,
-          :check_every_month => true,
-          :hour_check_delay => librato_delay,
-          :day_check_delay => librato_delay,
-          :week_check_delay => librato_delay,
-          :month_check_delay => librato_delay,
-          :data_start => Time.new(2000, 1, 1, 0, 0, 0, 0).utc,
-          :enabled => true,
+          :check_every => 'hour',
+          :check_delay => librato_delay,
           :source_info => JSON.dump({
             'name' => 'librato',
             'metric' => metric_name,
             'username' => args[:user],
             'password' => args[:pass]
-          })
+          }),
         )
       end
     end
@@ -37,7 +29,7 @@ namespace :shepherd do
   task :unwatch, [:pattern] => :environment do |t, args|
     pattern = Regexp.new(args[:pattern])
     Metric.all.each do |metric|
-      metric_name = metric.source_info['metric']
+      metric_name = metric.get_source_info['metric']
       if pattern.match(metric_name)
         puts "Unwatching #{metric_name}"
         Metric.destroy(metric.id)
@@ -49,7 +41,7 @@ namespace :shepherd do
   task :watched, [:pattern] => :environment do |t, args|
     pattern = args[:pattern].nil? ? nil : Regexp.new(args[:pattern])
     Metric.all.each do |metric|
-      metric_name = metric.source_info['metric']
+      metric_name = metric.get_source_info['metric']
       if pattern.nil? || pattern.match(metric_name)
         puts "Watched #{metric_name}"
       end
@@ -86,22 +78,15 @@ namespace :shepherd do
   end
 
   desc "Clears cache, deletes all observations and all metrics last-check data"
-  task :forget => :environment do |t, args|
-    Metric.all.each do |metric|
-      metric.last_hour_check = nil
-      metric.last_day_check = nil
-      metric.last_week_check = nil
-      metric.last_month_check = nil
-      metric.save!
-    end
+  task :clear => :environment do |t, args|
     $redis.flushall
     Observation.delete_all
   end
 
   desc "Clears cache and observation data and restarts all Shepherd daemons"
-  task :respawn => :environment do |t, args|
+  task :restart => :environment do |t, args|
     execute_task('shepherd:stop')
-    execute_task('shepherd:forget')
+    execute_task('shepherd:clear')
     execute_task('shepherd:start')
   end
 

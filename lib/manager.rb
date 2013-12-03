@@ -39,6 +39,8 @@ class Manager
     done_checks.each do |check_json|
       check = json_to_check(check_json)
       metric = check['metric']
+      check_start = check['start']
+      check_period = check['period']
       if metric
         # get observation data
         observation_json = $redis.hget('observations', check_json)
@@ -48,11 +50,11 @@ class Manager
           observation_info['start'] = check_start
           observation_info['period'] = check_period
           # create or update metric observation
-          observation = Observation.where(
+          observation = (Observation.where(
             :metric_id => metric.id,
             :start => check_start,
             :period => check_period
-          )[0] || Observation.new
+          )[0] || Observation.new)
           updated = observation.update_attributes(observation_info)
           registered += 1 if updated
         end
@@ -85,19 +87,15 @@ class Manager
     checks = []
     metrics = Metric.all
     metrics.each do |metric|
+      delayed_now = now - metric.check_delay * 1.minute
       metric.periods.each do |period|
-        delayed_now = now - metric.check_delay * 1.minute
-        max_check_end = crop_time(delayed_now, period)
-        period_time = 1.send(period)
-        last_check = metric.send("last_#{period}_check")
-        check_start = last_check ? last_check + period_time : max_check_end - period_time
-        
-        last_observation = Observation.where(:metric_id => metric.id, :period => period)[0]
-        if last_observation
-          <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        else
-          
-        if check_start < max_check_end
+        check_start = crop_time(delayed_now, period) - 1.send(period)
+        observation = Observation.where(
+          :metric_id => metric.id,
+          :period => period,
+          :start => check_start,
+        ).first
+        unless observation
           checks.push({
             'metric' => metric,
             'start' => check_start,
@@ -129,7 +127,7 @@ class Manager
       check_json = check_to_json(check)
       unless checks_to_do.include?(check_json)
         scheduled_at = $redis.hget('scheduled_at', check_json)
-        unless scheduled_at && Time.strptime(scheduled_at, @@TIME_FORMAT) > now - @@MAX_SCHEDULED_TIME
+        unless scheduled_at && Time.strptime(scheduled_at, @@TIME_FORMAT).utc > now - @@MAX_SCHEDULED_TIME
           queue_key = get_queue_key(check)
           $redis.multi do
             $redis.lpush(queue_key, check_json)
@@ -146,12 +144,12 @@ class Manager
   def get_queue_key(check)
     now = Time.now.utc
     metric = check['metric']
-    source = metric.source_info['name']
+    source = metric.get_source_info['name']
     period = check['period']
     start_time = check['start']
     period_time = 1.send(period)
     end_time = start_time + period_time
-    delay = metric.send("#{period}_check_delay")
+    delay = metric.check_delay
     history = (now - end_time - delay) / period_time > 1
     @CHECK_QUEUES.each do |queue_name, queue_infos|
       if (queue_infos['sources'].include?(source) &&

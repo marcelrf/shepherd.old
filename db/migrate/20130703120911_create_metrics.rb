@@ -4,7 +4,7 @@ class CreateMetrics < ActiveRecord::Migration
       t.string :name
       t.text :source_info
       t.string :polarity
-      t.boolean :check_every
+      t.string :check_every
       t.integer :check_delay
 
       t.timestamps

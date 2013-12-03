@@ -2,15 +2,15 @@ class SourceData
   @@TIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ%z'
 
   def self.get_source_data(metric, check_start, period)
-    method_name = 'get_source_data_from_' + metric.source_info['name']
+    source_info = metric.get_source_info
+    method_name = 'get_source_data_from_' + source_info['name']
     SourceData.send(method_name, metric, check_start, period)
   end
 
   def self.get_source_data_from_librato(metric, check_start, period)
     Rails.logger.info "GET DATA #{metric.name} #{check_start} #{period}"
-    # TODO: REMOVE THIS LINE (provisory bug patch)
-    check_start -= 1.hours
-    start_time, end_time = get_time_range(metric, check_start, period)
+    check_start -= 1.hours # TODO: REMOVE THIS LINE (provisory bug patch) !!!!!!!!!!!!!!!!!!!!!
+    start_time, end_time = get_time_range(check_start, period)
     # adapt time range representation to librato format
     # who considers both start date and end date as inclusive
     start_time += 1.hour
@@ -22,7 +22,7 @@ class SourceData
       source_data[index_time] = 0
       index_time += 1.hour
     end
-    source_info = metric.source_info
+    source_info = metric.get_source_info
     # librato only accepts periods up to 1 hour
     # and queries up to 100 elements
     intervals = divide_time_range(start_time, end_time, 'hour', 100)
@@ -50,7 +50,7 @@ class SourceData
 
   def self.get_cache_data(metric, start_time, end_time, period)
     no_cache_data = [[], start_time]
-    return no_cache_data #############################################
+    return no_cache_data # TODO: correct and enable cache !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     cache_key = JSON.dump({
       'metric' => metric.id,
       'period' => period
@@ -84,18 +84,15 @@ class SourceData
     $redis.hset('source_data', cache_key, data_json)
   end
 
-  def self.get_time_range(metric, check_start, period)
+  def self.get_time_range(check_start, period)
     if period == 'hour'
-      start_time = check_start - 26.weeks
+      start_time = check_start - 3.months
     elsif period == 'day'
-      start_time = check_start - 24.months
+      start_time = check_start - 12.months
     elsif period == 'week'
       start_time = check_start - 24.months
     elsif period == 'month'
       start_time = check_start - 24.months
-    end
-    if start_time < metric.data_start
-      start_time = advance_time(metric.data_start, period)
     end
     end_time = check_start + 1.send(period)
     [start_time, end_time]

@@ -17,8 +17,15 @@ class Metric < ActiveRecord::Base
 
   def periods
     all_periods = ['hour', 'day', 'week', 'month']
-    metric_period_index = all_periods.index(self['period'])
+    metric_period_index = all_periods.index(self['check_every'])
     all_periods[metric_period_index..-1]
+  end
+
+  def state(period)
+    observations = self.observations.select do |observation|
+      observation.period == period
+    end
+    observations.sort_by{|observation| observation.start}[-1]
   end
 
   def to_hash
