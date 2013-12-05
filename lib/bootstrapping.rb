@@ -6,12 +6,13 @@ class Bootstrapping
     return nil if control_data.size < minimum_size(period)
     control_gap = control_data.map{|e| e[1]}.max - control_data.map{|e| e[1]}.min
     periods = ['hour', 'day', 'week', 'month']
-    periods_to_analyze = periods[periods.index(period)..periods.index(period)+2]
+    periods_to_analyze = periods[periods.index(period)..periods.index(period)+1]
     percentiles = Hash.new{|h, k| h[k] = 0}
     divider = 0
     periods_to_analyze.each do |period_to_analyze|
       period_data = slice_control_data(control_data, period, period_to_analyze)
-      period_percentiles = get_bootstrapping_percentiles(period_data)
+      period_values = period_data.map{|element| element[1]}
+      period_percentiles = get_bootstrapping_percentiles(period_values)
       period_factor = get_period_factor(period_to_analyze, period_data, period_percentiles, control_gap)
       period_percentiles.keys.each do |percentile|
         percentiles[percentile] += period_percentiles[percentile] * period_factor
@@ -105,53 +106,65 @@ class Bootstrapping
         [value, freqs[value].to_f / sample.size]
       end
       accum_freq = 0
-      percentile10 = percentile50 = percentile90 = 0
+      percentile15 = percentile50 = percentile85 = 0
       relative_freqs.each do |value, rel_freq|
         new_accum_freq = accum_freq + rel_freq
-        if accum_freq < 0.10 && new_accum_freq >= 0.10
-          percentile10 = value
+        if accum_freq < 0.15 && new_accum_freq >= 0.15
+          percentile15 = value
         end
         if accum_freq < 0.5 && new_accum_freq >= 0.5
           percentile50 = value
         end
-        if accum_freq < 0.90 && new_accum_freq >= 0.90
-          percentile90 = value
+        if accum_freq < 0.85 && new_accum_freq >= 0.85
+          percentile85 = value
         end
         accum_freq = new_accum_freq
       end
-      [percentile10, percentile50, percentile90]
+      [percentile15, percentile50, percentile85]
     end
     # get percentile means
-    percentile10_accum = percentile50_accum = percentile90_accum = 0
+    percentile15_accum = percentile50_accum = percentile85_accum = 0
     percentiles.each do |percentile|
-      percentile10_accum += percentile[0]
+      percentile15_accum += percentile[0]
       percentile50_accum += percentile[1]
-      percentile90_accum += percentile[2]
+      percentile85_accum += percentile[2]
     end
-    percentile10_mean = percentile10_accum.to_f / percentiles.size
+    percentile15_mean = percentile15_accum.to_f / percentiles.size
     percentile50_mean = percentile50_accum.to_f / percentiles.size
-    percentile90_mean = percentile90_accum.to_f / percentiles.size
+    percentile85_mean = percentile85_accum.to_f / percentiles.size
     {
-      'low' => percentile10_mean,
+      'low' => percentile15_mean,
       'median' => percentile50_mean,
-      'high' => percentile90_mean,
+      'high' => percentile85_mean,
     }
   end
 
   def self.get_bootstrapping_samples(values, iterations)
     # give weight to values depending on how recent they are
     # using a magic number algorithm
-    magic_number = 0.999
-    last_value_timestamp = values[-1][0].to_i
     weighted_values = []
-    values.each do |element|
-      value_timestamp = element[0].to_i
-      time_proportion = value_timestamp / last_value_timestamp.to_f
-      time_factor = 1 / (1 + Math.log(time_proportion) / Math.log(magic_number))
-      (time_factor * 10).ceil.times do
-        weighted_values.push(element[1])
+    counter, magic_number = 1, 1
+    while magic_number <= values.count
+      (1..magic_number).each do |index|
+        weighted_values.push(values[-index])
       end
+      counter += 1
+      magic_number += counter
     end
+    weighted_values.concat(values)
+    # # give weight to values depending on how recent they are
+    # # using a magic number algorithm
+    # magic_number = 0.9
+    # last_value_timestamp = values[-1][0].to_i
+    # weighted_values = []
+    # values.each do |element|
+    #   value_timestamp = element[0].to_i
+    #   time_proportion = value_timestamp / last_value_timestamp.to_f
+    #   time_factor = 1 / (1 + Math.log(time_proportion) / Math.log(magic_number))
+    #   (time_factor * 10).ceil.times do
+    #     weighted_values.push(element[1])
+    #   end
+    # end
     # create the samples
     samples = []
     iterations.times do
@@ -166,9 +179,9 @@ class Bootstrapping
 
   def self.get_period_factor(period, data, percentiles, gap)
     if period == 'hour'
-      confidence = get_confidence(data.count, 2160) # 3 months
+      confidence = get_confidence(data.count, 720) # 30 days
     elsif period == 'day'
-      confidence = get_confidence(data.count, 360) # 12 months
+      confidence = get_confidence(data.count, 182) # 26 weeks
     elsif period == 'week'
       confidence = get_confidence(data.count, 104) # 24 months
     elsif period == 'month'
@@ -179,7 +192,7 @@ class Bootstrapping
     else
       compactness = 1.0 - (percentiles['high'] - percentiles['low']) / gap
     end
-    (confidence * compactness) ** 10
+    (confidence * compactness) ** 3
   end
 
   def self.get_confidence(count, max)

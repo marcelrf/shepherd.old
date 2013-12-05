@@ -1,8 +1,7 @@
 class MapsController < InheritedResources::Base
   def show
-    period = 'hour'
     @metric_infos = Metric.all.map do |metric|
-      [metric, metric.state(period)]
+      [metric, metric.state(params[:period])]
     end
   end
 end

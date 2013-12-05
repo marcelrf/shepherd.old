@@ -86,9 +86,9 @@ class SourceData
 
   def self.get_time_range(check_start, period)
     if period == 'hour'
-      start_time = check_start - 3.months
+      start_time = check_start - 30.days
     elsif period == 'day'
-      start_time = check_start - 12.months
+      start_time = check_start - 26.weeks
     elsif period == 'week'
       start_time = check_start - 24.months
     elsif period == 'month'
