@@ -44,18 +44,13 @@ class Worker
   end
 
   def execute_check(check_json)
-    Rails.logger.info "EXECUTE CHECK #{check_json} 1"
     check = json_to_check(check_json)
-    Rails.logger.info "EXECUTE CHECK #{check_json} 2"
     source_data = SourceData.get_source_data(check['metric'], check['start'], check['period'])
-    Rails.logger.info "EXECUTE CHECK #{check_json} 3"
     analysis = Bootstrapping.get_bootstrapping_analysis(source_data, check['period'])
-    Rails.logger.info "EXECUTE CHECK #{check_json} 4"
     $redis.multi do
       $redis.hset('observations', check_json, JSON.dump(analysis))
       $redis.sadd('done_checks', check_json)
     end
-    Rails.logger.info "EXECUTE CHECK #{check_json} 5"
   end
 
   def json_to_check(check_json)
