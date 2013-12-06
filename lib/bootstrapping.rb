@@ -140,37 +140,13 @@ class Bootstrapping
   end
 
   def self.get_bootstrapping_samples(values, iterations)
-    # give weight to values depending on how recent they are
-    # using a magic number algorithm
-    weighted_values = []
-    counter, magic_number = 1, 1
-    while magic_number <= values.count
-      (1..magic_number).each do |index|
-        weighted_values.push(values[-index])
-      end
-      counter += 1
-      magic_number += counter
-    end
-    weighted_values.concat(values)
-    # # give weight to values depending on how recent they are
-    # # using a magic number algorithm
-    # magic_number = 0.9
-    # last_value_timestamp = values[-1][0].to_i
-    # weighted_values = []
-    # values.each do |element|
-    #   value_timestamp = element[0].to_i
-    #   time_proportion = value_timestamp / last_value_timestamp.to_f
-    #   time_factor = 1 / (1 + Math.log(time_proportion) / Math.log(magic_number))
-    #   (time_factor * 10).ceil.times do
-    #     weighted_values.push(element[1])
-    #   end
-    # end
-    # create the samples
     samples = []
     iterations.times do
       sample = []
       values.size.times do
-        sample.push(weighted_values[(rand * weighted_values.size).to_i])
+        # multiply random float between 0 an 1 by 0.3
+        # to give more weight to recent values
+        sample.push(values[((rand ** 0.3) * values.size).to_i])
       end
       samples.push(sample)
     end
