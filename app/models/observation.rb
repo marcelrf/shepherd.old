@@ -15,7 +15,6 @@ class Observation < ActiveRecord::Base
   def to_hash
     observation_json = self.to_json
     observation_info = JSON.load(observation_json)
-    observation_info.delete('id')
     observation_info.delete('created_at')
     observation_info.delete('updated_at')
     observation_info
