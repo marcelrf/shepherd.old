@@ -31,7 +31,6 @@ class Metric < ActiveRecord::Base
   def to_hash
     metric_json = self.to_json
     metric_info = JSON.load(metric_json)
-    metric_info.delete('id')
     metric_info.delete('created_at')
     metric_info.delete('updated_at')
     metric_info

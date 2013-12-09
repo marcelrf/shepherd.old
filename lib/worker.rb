@@ -59,6 +59,7 @@ class Worker
     metric_info = JSON.load(metric_json)
     # metric_info['source_info'] = JSON.dump(metric_info['source_info'])
     check['metric'] = Metric.new(metric_info)
+    check['metric'].id = metric_info['id']
     check['start'] = Time.strptime(check['start'], @@TIME_FORMAT).utc
     check
   end

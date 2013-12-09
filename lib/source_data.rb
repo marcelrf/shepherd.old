@@ -50,7 +50,6 @@ class SourceData
 
   def self.get_cache_data(metric, start_time, end_time, period)
     no_cache_data = [[], start_time]
-    return no_cache_data # TODO: correct and enable cache !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     cache_key = JSON.dump({
       'metric' => metric.id,
       'period' => period
