@@ -50,6 +50,7 @@ class SourceData
 
   def self.get_cache_data(metric, start_time, end_time, period)
     no_cache_data = [[], start_time]
+    return no_cache_data # PROVISORY MUST FIX BUG
     cache_key = JSON.dump({
       'metric' => metric.id,
       'period' => period
@@ -160,9 +161,16 @@ class SourceData
   end
 
   def self.get_metrics_from_librato(username, password, pattern)
-    url = 'https://metrics-api.librato.com/v1/'
-    url += "metrics?name=#{pattern}"
+    root_path = 'https://metrics-api.librato.com/v1/'
     basic_auth = {:username => username, :password => password}
-    HTTParty.get(url, :basic_auth => basic_auth)['metrics']
+    page_offset, page_length = 0, 100
+    page_data, metrics = {}, []
+    while page_data.empty? || page_offset < page_data['query']['found']
+      url = root_path + "metrics?name=#{pattern}&offset=#{page_offset}&length=#{page_length}"
+      page_data = HTTParty.get(url, :basic_auth => basic_auth)
+      metrics += page_data['metrics']
+      page_offset += page_length
+    end
+    metrics
   end
 end
