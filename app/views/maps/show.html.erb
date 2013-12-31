@@ -1,40 +1,48 @@
-<form method="get">
-  <input name="filter" type="text" value="<%= @filter %>" />
-  <input type="submit" value="Filter" class="btn" />
-  <input name="group" type="text" value="<%= @group %>" />
-  <input type="submit" value="Group" class="btn" />
-</form>
 
-<table class="map-group">
-<% @metric_infos.keys.each do |group| %>
-  <% group_infos = @metric_infos[group] %>
-  <% columns, rows, table_size, cell_size = table_measures(group_infos) %>
+<div id="option-container">
+  <form method="get">
+    <input name="filter" type="text" value="<%= @filter %>" />
+    <input name="group" type="text" value="<%= @group %>" />
+    <input type="submit" value="Go" class="btn" />
+  </form>
+</div>
 
-  <tr><td><%= group %></td></tr>
-  <tr>
-    <td>
-
-      <table class="map" style="width:<%= table_size %>px;height:<%= cell_size %>px">
-      <% rows.times do %>
-        <tr>
-        <% columns.times do %>
-          <% metric, state = group_infos.shift %>
-          <td style="width:<%= cell_size %>px;
-                     height:<%= cell_size %>px;
-                     background-color:<%= cell_color(metric, state) %>"
-            <% if metric %>
-              title="<%= metric.name %>
-      <%= state ? state.start : '' %>
-      <%= state ? state.period : '' %>
-      <%= format_divergence(metric, state) %>"
-            <% end %> >
-          </td>
+<% map_names = @maps.keys %>
+<div id="map-container">
+  <table class="map-group">
+    <% group_columns, group_rows, group_column_width, group_row_height = table_measures(total_width, total_height, @maps.count) %>
+    <% group_rows.times do %>
+      <tr>
+        <% group_columns.times do %>
+          <% map_name = map_names.shift %>
+          <% if map_name %>
+            <% map = @maps[map_name] %>
+            <td>
+              <span class="map-name"><%= map_name %></span><br />
+              <table class="map" style="width:<%= group_column_width %>px;height:<%= group_row_height %>px">
+                <% map_columns, map_rows, map_column_width, map_row_height = table_measures(group_column_width, group_row_height, map.count) %>
+                <% map_rows.times do %>
+                  <tr>
+                    <% map_columns.times do %>
+                      <% metric, state = map.shift %>
+                      <td style="width:<%= map_column_width %>px;
+                                 height:<%= map_row_height %>px;
+                                 background-color:<%= cell_color(metric, state) %>"
+                        <% if metric %>
+                          title="<%= metric.name %>
+                                 <%= state ? state.start : '' %>
+                                 <%= state ? state.period : '' %>
+                                 <%= format_divergence(metric, state) %>"
+                        <% end %> >
+                      </td>
+                    <% end %>
+                  </tr>
+                <% end %>
+              </table>
+            </td>
+          <% end %>
         <% end %>
-        </tr>
-      <% end %>
-      </table>
-
-    </td>
-  </tr>
-<% end %>
-</table>
+      </tr>
+    <% end %>
+  </table>
+</div>

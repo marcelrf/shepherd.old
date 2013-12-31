@@ -1,16 +1,29 @@
 module MapsHelper
-  def table_measures(group_infos)
-    columns = Math.sqrt(group_infos.count).ceil
-    rows = columns == 0 ? 0 : (group_infos.count / columns.to_f).ceil
-    table_size = 500
-    cell_size = columns == 0 ? 0 : (table_size / columns.to_f).floor
-    [columns, rows, table_size, cell_size]
+  def total_width
+    700
+  end
+  
+  def total_height
+    500
+  end
+
+  def table_measures(width, height, count)
+    columns, rows = 1, 1
+    column_width, row_height = width, height
+    while count > columns * rows
+      if column_width > row_height
+        column_width = column_width * columns / (columns + 1)
+        columns += 1
+      else
+        row_height = row_height * rows / (rows + 1)
+        rows += 1
+      end
+    end
+    [columns, rows, column_width, row_height]
   end
 
   def cell_color(metric, state)
-    if !metric
-      "#F0F0F0"
-    elsif !state || state.divergence == 0
+    if !metric || !state || state.divergence == 0
       "#FFFFFF"
     elsif state.divergence > 0
       red_blue = (255 - (-1 / ((state.divergence / 4) ** 2 + 1) + 1) * 255).to_i.to_s(16)

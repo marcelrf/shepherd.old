@@ -1,3 +1,15 @@
 table.map td {
   border: 1px solid #F0F0F0
 }
+
+#option-container {
+  width: 240px;
+  height: 600px;
+  background-color: lightgray;
+  float: left;
+  padding: 10px;
+}
+
+.map-name {
+  font-size: 8px;
+}
