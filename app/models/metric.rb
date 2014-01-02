@@ -22,9 +22,7 @@ class Metric < ActiveRecord::Base
   end
 
   def state(period)
-    observations = self.observations.select do |observation|
-      observation.period == period
-    end
+    observations = Observation.where(:metric_id => self['id'], :period => period)
     observations.sort_by{|observation| observation.start}[-1]
   end
 
