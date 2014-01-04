@@ -6,6 +6,7 @@ class CreateMetrics < ActiveRecord::Migration
       t.string :polarity
       t.string :check_every
       t.integer :check_delay
+      t.string :kind
 
       t.timestamps
     end

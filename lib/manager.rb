@@ -150,11 +150,9 @@ class Manager
     period_time = 1.send(period)
     end_time = start_time + period_time
     delay = metric.check_delay
-    history = (now - end_time - delay) / period_time > 1
     @CHECK_QUEUES.each do |queue_name, queue_infos|
       if (queue_infos['sources'].include?(source) &&
-          queue_infos['periods'].include?(period) &&
-          (!history || queue_infos['history']))
+          queue_infos['periods'].include?(period))
         return queue_name
       end
     end

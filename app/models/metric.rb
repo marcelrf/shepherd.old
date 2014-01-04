@@ -1,9 +1,10 @@
 class Metric < ActiveRecord::Base
-  attr_accessible :name, :source_info, :polarity, :check_every, :check_delay
+  attr_accessible :name, :source_info, :polarity, :check_every, :check_delay, :kind
   has_many :observations
 
   validates :name, :presence => true, :length => { :minimum => 2 }
   validates :polarity, :presence => true, inclusion: { :in =>  %w(positive negative) }
+  validates :kind, :presence => true, inclusion: { :in =>  %w(counter gauge) }
   validates :check_every, :presence => true, inclusion: { :in =>  %w(hour day week month) }
   validates :check_delay, :numericality => { :only_integer => true, :greater_than_or_equal_to => 0}, :allow_nil => true
 
