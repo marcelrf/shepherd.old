@@ -8,18 +8,15 @@ class SourceData
   end
 
   def self.get_source_data_from_librato(metric, check_start, period)
-    Rails.logger.info "GET DATA #{metric.name} #{check_start} #{period}"
-    check_start -= 1.hours # TODO: REMOVE THIS LINE (provisory bug patch) !!!!!!!!!!!!!!!!!!!!!
-    start_time, end_time = get_time_range(check_start, period)
-    # adapt time range representation to librato format
-    # who considers both start date and end date as inclusive
-    start_time += 1.hour
+    Rails.logger.info "GET DATA #{metric.name} #{metric.kind} #{check_start} #{period}"
+    start_time, end_time = get_time_range_for_librato(check_start, period)
     cache_data, start_time = get_cache_data(metric, start_time, end_time, period)
     # initialize source data
-    source_data = {}
+    source_data, source_count = {}, {}
     index_time = start_time
     while index_time <= end_time
       source_data[index_time] = 0
+      source_count[index_time] = 0
       index_time += 1.hour
     end
     source_info = metric.get_source_info
@@ -37,20 +34,32 @@ class SourceData
       response['measurements'].keys.each do |data_group|
         response['measurements'][data_group].each do |element|
           time = Time.strptime(element['measure_time'].to_s, '%s').utc
-          source_data[time] += element['sum']
+          if metric.kind == 'counter'
+            source_data[time] += element['sum']
+          elsif metric.kind == 'gauge'
+            source_data[time] += element['value']
+            source_count[time] += 1
+          end
+        end
+      end
+    end
+    if metric.kind == 'gauge'
+      source_data.keys.each do |time|
+        if source_count[time] > 0
+          source_data[time] = source_data[time] / source_count[time].to_f
         end
       end
     end
     grouped_data = group_data_by_period(source_data.to_a, period)
     full_source_data = cache_data + grouped_data
     set_cache_data(metric, period, full_source_data)
-    Rails.logger.info "END GET DATA #{metric.name} #{check_start} #{period}"
+    Rails.logger.info "END GET DATA #{metric.name} #{metric.kind} #{check_start} #{period}"
     full_source_data
   end
 
   def self.get_cache_data(metric, start_time, end_time, period)
+    start_pivot = start_time - 1.hour + 1.send(period)
     no_cache_data = [[], start_time]
-    return no_cache_data # PROVISORY MUST FIX BUG
     cache_key = JSON.dump({
       'metric' => metric.id,
       'period' => period
@@ -60,8 +69,8 @@ class SourceData
       cache_data = JSON.load(cache_data_json).map do |element|
         [Time.parse(element[0], @@TIME_FORMAT).utc, element[1]]
       end
-      if cache_data[0][0] <= start_time
-        cache_data.shift while cache_data[0][0] < start_time
+      if cache_data[0][0] <= start_pivot
+        cache_data.shift while cache_data[0][0] < start_pivot
         cache_data.pop while cache_data[-1][0] > end_time
         [cache_data, cache_data[-1][0] + 1.send(period)]
       else
@@ -84,16 +93,19 @@ class SourceData
     $redis.hset('source_data', cache_key, data_json)
   end
 
-  def self.get_time_range(check_start, period)
+  def self.get_time_range_for_librato(check_start, period)
     if period == 'hour'
-      start_time = check_start - 30.days
+      start_time = check_start - 672.hours
     elsif period == 'day'
-      start_time = check_start - 26.weeks
+      start_time = check_start - 182.days
     elsif period == 'week'
-      start_time = check_start - 24.months
+      start_time = check_start - 104.weeks
     elsif period == 'month'
       start_time = check_start - 24.months
     end
+    # adapt time range representation to librato format
+    # who labels a period by the end time
+    start_time += 1.hour
     end_time = check_start + 1.send(period)
     [start_time, end_time]
   end

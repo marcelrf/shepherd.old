@@ -1,19 +1,21 @@
 namespace :shepherd do
   desc "Makes Shepherd start to watch the passed metrics"
-  task :watch, [:user, :pass, :pattern, :polarity] => :environment do |t, args|
-    librato_delay = 5 # in minutes
+  task :watch, [:user, :pass, :pattern, :polarity, :kind] => :environment do |t, args|
+    librato_delay = 45 # in minutes
     polarity = args[:polarity].nil? ? 'positive' : args[:polarity]
+    kind = args[:kind].nil? ? 'counter' : args[:kind]
     librato_metrics = SourceData.get_metrics_from_librato(args[:user], args[:pass], args[:pattern])
     librato_metrics.each do |librato_metric|
       metric_name = librato_metric['name']
       existing = Metric.where('name' => metric_name)
       if existing.count == 0
-        puts "Watching #{metric_name}"
+        puts "Watching #{polarity} #{kind} #{metric_name}"
         Metric.create(
           :name => metric_name,
           :polarity => polarity,
           :check_every => 'hour',
           :check_delay => librato_delay,
+          :kind => kind,
           :source_info => JSON.dump({
             'name' => 'librato',
             'metric' => metric_name,

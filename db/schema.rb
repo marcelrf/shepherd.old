@@ -52,6 +52,7 @@ ActiveRecord::Schema.define(:version => 20130705215208) do
     t.string   "polarity"
     t.string   "check_every"
     t.integer  "check_delay"
+    t.string   "kind"
     t.datetime "created_at",  :null => false
     t.datetime "updated_at",  :null => false
   end
