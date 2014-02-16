@@ -18,7 +18,7 @@ Usage
 
 To make Shepherd start watching a list of metrics, use:
 
-> rake shepherd:watch[<librato-api-username>,<librato-api-password>,<librato-metric-wildcard>]
+> rake shepherd:watch[librato-api-username,librato-api-password,librato-metric-wildcard]
 
 The username and password are specified in the Librato account page, and the metric wildcard is the same that you can use in the metric selector in the same Librato system. If you want to watch a single metric, use its whole name, and the wildcard will just match it.
 
@@ -26,7 +26,7 @@ The username and password are specified in the Librato account page, and the met
 
 To make Shepherd stop watching a list of metrics, use:
 
-> rake shepherd:unwatch[<regular-expression>]
+> rake shepherd:unwatch[regular-expression]
 
 This time, as only Shepherd is evaluating the expression, you can use a regular expression to pick the metrics you want to stop watching.
 
