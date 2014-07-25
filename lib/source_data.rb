@@ -1,156 +1,19 @@
 class SourceData
+  @@URL_ROOT = 'https://metrics-api.librato.com/v1'
+  @@DATA_TEMPLATE = "/metrics/%s?start_time=%s&end_time=%s&resolution=3600"
+  @@METRICS_TEMPLATE = "/metrics?name=%s&offset=%s&length=%s"
   @@TIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ%z'
 
-  def self.get_source_data(metric, check_start, period)
-    source_info = metric.get_source_info
-    method_name = 'get_source_data_from_' + source_info['name']
-    SourceData.send(method_name, metric, check_start, period)
-  end
-
-  def self.get_source_data_from_librato(metric, check_start, period)
-    Rails.logger.info "GET DATA #{metric.name} #{metric.kind} #{check_start} #{period}"
-    start_time, end_time = get_time_range_for_librato(check_start, period)
-    cache_data, start_time = get_cache_data(metric, start_time, end_time, period)
-    # initialize source data
-    source_data, source_count = {}, {}
-    index_time = start_time
-    while index_time <= end_time
-      source_data[index_time] = 0
-      source_count[index_time] = 0
-      index_time += 1.hour
-    end
-    source_info = metric.get_source_info
-    # librato only accepts periods up to 1 hour
-    # and queries up to 100 elements
+  def self.get_source_data(metric, period, start_time, end_time)
+    source_data = []
     intervals = divide_time_range(start_time, end_time, 'hour', 100)
     intervals.each do |interval_start, interval_end|
-      url = 'https://metrics-api.librato.com/v1/'
-      url += "metrics/#{source_info['metric']}"
-      url += "?start_time=#{interval_start.to_i}"
-      url += "&end_time=#{interval_end.to_i}"
-      url += "&resolution=3600"
-      basic_auth = {:username => source_info['username'], :password => source_info['password']}
-      response = HTTParty.get(url, :basic_auth => basic_auth)
-      response['measurements'].keys.each do |data_group|
-        response['measurements'][data_group].each do |element|
-          time = Time.strptime(element['measure_time'].to_s, '%s').utc
-          if metric.kind == 'counter'
-            source_data[time] += element['sum']
-          elsif metric.kind == 'gauge'
-            source_data[time] += element['value']
-            source_count[time] += 1
-          end
-        end
-      end
+      source_data += get_interval_data(metric, interval_start, interval_end)
     end
-    if metric.kind == 'gauge'
-      source_data.keys.each do |time|
-        if source_count[time] > 0
-          source_data[time] = source_data[time] / source_count[time].to_f
-        end
-      end
-    end
-    grouped_data = group_data_by_period(source_data.to_a, period)
-    full_source_data = cache_data + grouped_data
-    set_cache_data(metric, period, full_source_data)
-    Rails.logger.info "END GET DATA #{metric.name} #{metric.kind} #{check_start} #{period}"
-    full_source_data
-  end
-
-  def self.get_cache_data(metric, start_time, end_time, period)
-    start_pivot = start_time - 1.hour + 1.send(period)
-    no_cache_data = [[], start_time]
-    cache_key = JSON.dump({
-      'metric' => metric.id,
-      'period' => period
-    })
-    cache_data_json = $redis.hget('source_data', cache_key)
-    if cache_data_json
-      cache_data = JSON.load(cache_data_json).map do |element|
-        [Time.parse(element[0], @@TIME_FORMAT).utc, element[1]]
-      end
-      if cache_data[0][0] <= start_pivot
-        cache_data.shift while cache_data[0][0] < start_pivot
-        cache_data.pop while cache_data[-1][0] > end_time
-        [cache_data, cache_data[-1][0] + 1.send(period)]
-      else
-        no_cache_data
-      end
-    else
-      no_cache_data
-    end
-  end
-
-  def self.set_cache_data(metric, period, data)
-    cache_key = JSON.dump({
-      'metric' => metric.id,
-      'period' => period
-    })
-    formatted_data = data.map do |element|
-      [element[0].strftime(@@TIME_FORMAT), element[1]]
-    end
-    data_json = JSON.dump(formatted_data)
-    $redis.hset('source_data', cache_key, data_json)
-  end
-
-  def self.get_time_range_for_librato(check_start, period)
-    if period == 'hour'
-      start_time = check_start - 672.hours
-    elsif period == 'day'
-      start_time = check_start - 182.days
-    elsif period == 'week'
-      start_time = check_start - 104.weeks
-    elsif period == 'month'
-      start_time = check_start - 24.months
-    end
-    # adapt time range representation to librato format
-    # who labels a period by the end time
-    start_time += 1.hour
-    end_time = check_start + 1.send(period)
-    [start_time, end_time]
-  end
-
-  def self.advance_time(time, advance_until)
-    """
-    Snaps the time to the next period start
-    For example: advance '2013-01-05T12:50:35Z0000'
-    until 'day' start would become '2013-02-00T00:00:00Z0000'
-    """
-    advanced_time = time
-    if advance_until == 'hour'
-      if time.min > 0 || time.sec > 0
-        advanced_time = Time.new(
-          time.year, time.month, time.day,
-          time.hour, 0, 0, 0
-        ).utc + 1.hour
-      end
-    elsif ['day', 'week'].include?(advance_until)
-      if time.hour > 0 || time.min > 0 || time.sec > 0
-        advanced_time = Time.new(
-          time.year, time.month, time.day,
-          0, 0, 0, 0
-        ).utc + 1.day
-      end
-      if advance_until == 'week'
-        advanced_time += ((8 - advanced_time.wday) % 7).days
-      end
-    elsif advance_until == 'month'
-      if time.day > 1 || time.hour > 0 || time.min > 0 || time.sec > 0
-        advanced_time = Time.new(
-          time.year, time.month, 1,
-          0, 0, 0, 0
-        ).utc + 1.month
-      end
-    end
-    advanced_time
+    group_data_by_period(source_data, period)
   end
 
   def self.divide_time_range(start_time, end_time, period, max_elements)
-    """
-    Divides a time range in smaller time ranges
-    For services that do not support queries
-    longer than max_elements max_elements
-    """
     intervals = []
     interval_start = start_time
     while interval_start < end_time
@@ -162,27 +25,51 @@ class SourceData
     intervals
   end
 
-  def self.group_data_by_period(data, period)
-    grouped_data = Hash.new{|hash, key| hash[key] = 0}
-    data.each do |element|
-      time, value = element
-      advanced_time = advance_time(time, period)
-      grouped_data[advanced_time] += value
+  def self.get_interval_data(metric, start_time, end_time)
+    url = @@URL_ROOT + (@@DATA_TEMPLATE % [
+      metric.name,
+      start_time.to_i,
+      (end_time - 1.second).to_i
+    ])
+    basic_auth = {
+      :username => metric.source.username,
+      :password => metric.source.password
+    }
+    response = HTTParty.get(url, :basic_auth => basic_auth)
+    response['measurements'].first[1].map do |value|
+      if metric.kind == 'counter'
+        value['sum']
+      elsif metric.kind == 'gauge'
+        value['value']
+      end
     end
-    grouped_data.to_a.sort_by{|element| element[0]}
   end
 
-  def self.get_metrics_from_librato(username, password, pattern)
-    root_path = 'https://metrics-api.librato.com/v1/'
-    basic_auth = {:username => username, :password => password}
+  def self.group_data_by_period(data, period)
+    if period == 'hour'
+      data
+    elsif period == 'day'
+      data.each_slice(24).map do |daily_data|
+        daily_data.inject{|sum, elem| sum + elem }
+      end
+    end
+  end
+
+  def self.get_metrics(source, pattern)
+    basic_auth = {
+      :username => source.username,
+      :password => source.password
+    }
     page_offset, page_length = 0, 100
     page_data, metrics = {}, []
     while page_data.empty? || page_offset < page_data['query']['found']
-      url = root_path + "metrics?name=#{pattern}&offset=#{page_offset}&length=#{page_length}"
+      url = @@URL_ROOT + (@@METRICS_TEMPLATE % [pattern, page_offset, page_length])
       page_data = HTTParty.get(url, :basic_auth => basic_auth)
       metrics += page_data['metrics']
       page_offset += page_length
     end
-    metrics
+    metrics.map do |metric|
+      metric['name']
+    end
   end
 end
