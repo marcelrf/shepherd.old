@@ -1,9 +1,11 @@
 class Cache
   @@TIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ%z'
   @@MAX_VALUES = 100
+  @@CHECK_DELAY = 5.minutes
 
   def self.get_source_data(metric, period)
-    end_time = get_cropped_time(Time.now.utc, period)
+    now = Time.now.utc - @@CHECK_DELAY
+    end_time = TimeUtils.get_cropped_time(now, period)
     cache_key = get_cache_key(metric, period)
     cache_data_json = $redis.get(cache_key)
     if cache_data_json
@@ -20,7 +22,7 @@ class Cache
         'values' => source_data
     })
     $redis.set(cache_key, cache_data_json)
-    source_data
+    [source_data, end_time]
   end
 
   def self.get_cache_key(metric, period)
@@ -29,13 +31,5 @@ class Cache
       'metric' => metric.id,
       'period' => period
     })
-  end
-
-  def self.get_cropped_time(time, period)
-    if period == 'hour'
-      Time.new(time.year, time.month, time.day, time.hour, 0, 0, 0).utc
-    elsif period == 'day'
-      Time.new(time.year, time.month, time.day, 0, 0, 0, 0).utc
-    end
   end
 end

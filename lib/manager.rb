@@ -1,9 +1,8 @@
-require 'time'
-require 'json'
-
 class Manager
   @@TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ%z"
   @@MAX_SCHEDULED_TIME = 10.minutes
+  @@CHECK_DELAY = 5.minutes
+  @@CHECK_PERIODS = ['day', 'hour']
 
   def initialize
     @CHECK_QUEUES = get_check_queues
@@ -13,7 +12,6 @@ class Manager
     filename ||= Rails.root.join('config/check_queues.yml').to_s
     check_queues = YAML.load(File.read(filename))
     check_queues.each do |queue_name, queue_infos|
-      queue_infos['sources'] = queue_infos['sources'].split(' ')
       queue_infos['periods'] = queue_infos['periods'].split(' ')
     end
   end
@@ -39,22 +37,15 @@ class Manager
     done_checks.each do |check_json|
       check = json_to_check(check_json)
       metric = check['metric']
-      check_start = check['start']
-      check_period = check['period']
       if metric
-        # get observation data
         observation_json = $redis.hget('observations', check_json)
         if observation_json
           observation_info = JSON.parse(observation_json)
           observation_info['metric'] = metric
-          observation_info['start'] = check_start
-          observation_info['period'] = check_period
-          # create or update metric observation
           observation = (Observation.where(
             :metric_id => metric.id,
-            :start => check_start,
             :period => check_period
-          )[0] || Observation.new)
+          ).first || Observation.new)
           updated = observation.update_attributes(observation_info)
           registered += 1 if updated
         end
@@ -83,41 +74,25 @@ class Manager
   end
 
   def get_new_checks
-    now = Time.now.utc
+    now = Time.now.utc - @@CHECK_DELAY
     checks = []
-    metrics = Metric.all
-    metrics.each do |metric|
-      delayed_now = now - metric.check_delay * 1.minute
-      metric.periods.each do |period|
-        check_start = crop_time(delayed_now, period) - 1.send(period)
+    Metric.all.each do |metric|
+      @@CHECK_PERIODS.each do |period|
+        check_time = TimeUtils.get_cropped_time(now, period)
         observation = Observation.where(
           :metric_id => metric.id,
           :period => period,
-          :start => check_start,
+          :time => check_time,
         ).first
         unless observation
           checks.push({
             'metric' => metric,
-            'start' => check_start,
             'period' => period,
           })
         end
       end
     end
     checks
-  end
-
-  def crop_time(time, crop_until)
-    if crop_until == 'hour'
-      Time.new(time.year, time.month, time.day, time.hour, 0, 0, 0).utc
-    elsif crop_until == 'day'
-      Time.new(time.year, time.month, time.day, 0, 0, 0, 0).utc
-    elsif crop_until == 'week'
-      last_day = Time.new(time.year, time.month, time.day, 0, 0, 0, 0).utc
-      last_day - ((last_day.wday - 1) % 7) * 1.day
-    elsif crop_until == 'month'
-      Time.new(time.year, time.month, 1, 0, 0, 0, 0).utc
-    end
   end
 
   def enqueue_new_checks(new_checks, checks_to_do)
@@ -142,17 +117,9 @@ class Manager
   end
 
   def get_queue_key(check)
-    now = Time.now.utc
-    metric = check['metric']
-    source = metric.get_source_info['name']
     period = check['period']
-    start_time = check['start']
-    period_time = 1.send(period)
-    end_time = start_time + period_time
-    delay = metric.check_delay
     @CHECK_QUEUES.each do |queue_name, queue_infos|
-      if (queue_infos['sources'].include?(source) &&
-          queue_infos['periods'].include?(period))
+      if queue_infos['periods'].include?(period)
         return queue_name
       end
     end
@@ -162,7 +129,6 @@ class Manager
   def check_to_json(check)
     JSON.dump({
       'metric' => check['metric'].id,
-      'start' => check['start'].strftime(@@TIME_FORMAT),
       'period' => check['period'],
     })
   end
@@ -170,7 +136,6 @@ class Manager
   def json_to_check(check_json)
     check = JSON.load(check_json)
     check['metric'] = Metric.find(check['metric'])
-    check['start'] = Time.strptime(check['start'], @@TIME_FORMAT).utc
     check
   end
 end

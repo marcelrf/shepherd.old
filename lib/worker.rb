@@ -45,8 +45,10 @@ class Worker
 
   def execute_check(check_json)
     check = json_to_check(check_json)
-    source_data = SourceData.get_source_data(check['metric'], check['start'], check['period'])
-    analysis = Bootstrapping.get_bootstrapping_analysis(source_data, check['period'])
+    source_data, check_time = Cache.get_source_data(check['metric'], check['period'])
+    analysis = Bootstrapping.get_bootstrapping_analysis(source_data)
+    analysis['period'] = check['period']
+    analysis['time'] = check_time.to_i
     $redis.multi do
       $redis.hset('observations', check_json, JSON.dump(analysis))
       $redis.sadd('done_checks', check_json)
@@ -57,10 +59,8 @@ class Worker
     check = JSON.load(check_json)
     metric_json = $redis.hget('metrics', check_json)
     metric_info = JSON.load(metric_json)
-    # metric_info['source_info'] = JSON.dump(metric_info['source_info'])
     check['metric'] = Metric.new(metric_info)
     check['metric'].id = metric_info['id']
-    check['start'] = Time.strptime(check['start'], @@TIME_FORMAT).utc
     check
   end
 end
