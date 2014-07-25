@@ -1,10 +1,8 @@
 
 short_range:
-  sources: librato
   periods: hour
   workers: 10
 
 long_range:
-  sources: librato
   periods: day week month
   workers: 1
