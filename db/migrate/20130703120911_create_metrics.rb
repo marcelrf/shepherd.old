@@ -1,11 +1,9 @@
 class CreateMetrics < ActiveRecord::Migration
   def change
     create_table :metrics do |t|
+      t.references :source
       t.string :name
-      t.text :source_info
       t.string :polarity
-      t.string :check_every
-      t.integer :check_delay
       t.string :kind
 
       t.timestamps

@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130705215208) do
+ActiveRecord::Schema.define(:version => 20140725024110) do
 
   create_table "active_admin_comments", :force => true do |t|
     t.string   "resource_id",   :null => false
@@ -47,26 +47,31 @@ ActiveRecord::Schema.define(:version => 20130705215208) do
   add_index "admin_users", ["reset_password_token"], :name => "index_admin_users_on_reset_password_token", :unique => true
 
   create_table "metrics", :force => true do |t|
+    t.integer  "source_id"
     t.string   "name"
-    t.text     "source_info"
     t.string   "polarity"
-    t.string   "check_every"
-    t.integer  "check_delay"
     t.string   "kind"
-    t.datetime "created_at",  :null => false
-    t.datetime "updated_at",  :null => false
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
   end
 
   create_table "observations", :force => true do |t|
     t.integer  "metric_id"
-    t.datetime "start"
+    t.datetime "time"
     t.string   "period"
     t.float    "low"
     t.float    "median"
     t.float    "high"
     t.float    "value"
-    t.float    "divergence"
     t.string   "data"
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
+  end
+
+  create_table "sources", :force => true do |t|
+    t.string   "name"
+    t.string   "username"
+    t.string   "password"
     t.datetime "created_at", :null => false
     t.datetime "updated_at", :null => false
   end
