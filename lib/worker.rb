@@ -46,7 +46,7 @@ class Worker
   def execute_check(check_json)
     check = json_to_check(check_json)
     source_data, check_time = Cache.get_source_data(check['metric'], check['period'])
-    analysis = Bootstrapping.get_bootstrapping_analysis(source_data)
+    analysis = DataAnalysis.get_bootstrapping_analysis(source_data)
     analysis['period'] = check['period']
     analysis['time'] = check_time.to_i
     $redis.multi do

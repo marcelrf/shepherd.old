@@ -1,6 +1,6 @@
 class Cache
   @@TIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ%z'
-  @@MAX_VALUES = 100
+  @@MAX_VALUES = 200
   @@CHECK_DELAY = 5.minutes
 
   def self.get_source_data(metric, period)
