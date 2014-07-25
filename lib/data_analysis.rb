@@ -5,13 +5,17 @@ class DataAnalysis
   def self.get_data_analysis(data)
     control_data, current_data = data[0...-1], data[-1]
     control_gap = control_data.max - control_data.min
+    if control_gap == 0
+      return get_flat_percentiles(control_data.first, current_data)
+    end
     slices = get_data_slices(control_data)
     percentiles = Hash.new{|h, k| h[k] = 0}
     divider = 0
     slices.each do |slice|
       slice_percentiles = get_bootstrapping_percentiles(slice)
+      puts slice_percentiles
       slice_gap = slice_percentiles['high'] - slice_percentiles['low']
-      slice_compactness = 1.0 - slice_gap / gap
+      slice_compactness = 1.0 - slice_gap / control_gap
       slice_percentiles.keys.each do |percentile|
         percentiles[percentile] += slice_percentiles[percentile] * slice_compactness
       end
@@ -21,15 +25,25 @@ class DataAnalysis
       percentiles[percentile] /= divider
     end
     percentiles['value'] = current_data
+    percentiles
   end
 
-  def self.get_data_slices(data):
+  def self.get_flat_percentiles(value, current)
+    {
+      'low' => value,
+      'median' => value,
+      'high' => value,
+      'value' => current,
+    }
+  end
+
+  def self.get_data_slices(data)
     reversed_data = data.reverse
     samples = []
     divider = 1
     while data.size / divider >= @@MIN_SAMPLE_ELEMENTS
       sample = reversed_data.each_slice(divider).map{|slice| slice.last}
-      samples.push(sample)
+      samples.push(sample.reverse)
       divider += 1
     end
     samples
