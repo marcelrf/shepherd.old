@@ -106,4 +106,17 @@ class DataAnalysis
     end
     samples
   end
+
+  def self.get_divergence(analysis)
+    if analysis['value'] == analysis['median']
+      0
+    else
+      deviation = analysis['value'].to_f - analysis['median']
+      if analysis['value'] > analysis['median']
+        deviation / (analysis['high'] - analysis['median'])
+      else
+        deviation / (analysis['median'] - analysis['low'])
+      end
+    end
+  end
 end

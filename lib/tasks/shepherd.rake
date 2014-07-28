@@ -94,12 +94,12 @@ namespace :shepherd do
 
   desc "Check the given metric for a given period"
   task :check, [:metric, :period] => :environment do |t, args|
-    puts "starting"
     metric = Metric.where(:name => args[:metric]).first
     if metric
       source_data, last_measure = Cache.get_source_data(metric, args['period'])
       analysis = DataAnalysis.get_data_analysis(source_data)
-      puts analysis, last_measure
+      divergence = DataAnalysis.get_divergence(analysis)
+      puts divergence
     else
       puts "Metric '#{args[:metric]}' not found"
     end
