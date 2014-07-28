@@ -79,7 +79,7 @@ namespace :shepherd do
     execute_task('daemon:worker:stop')
   end
 
-  desc "Clears cache, deletes all observations and all metrics last-check data"
+  desc "Clears cache and deletes all observations"
   task :clear => :environment do |t, args|
     $redis.flushall
     Observation.delete_all
@@ -93,16 +93,15 @@ namespace :shepherd do
   end
 
   desc "Check the given metric for a given period"
-  task :check, [:metric, :start, :period] => :environment do |t, args|
-    metric = Metric.where(:name => args[:metric])[0]
-    start = Time.parse(args[:start]).utc
-    if metric && start
-      source_data = SourceData.get_source_data(metric, start, args['period'])
-      analysis = Bootstrapping.get_bootstrapping_analysis(source_data, args['period'])
-      puts analysis
+  task :check, [:metric, :period] => :environment do |t, args|
+    puts "starting"
+    metric = Metric.where(:name => args[:metric]).first
+    if metric
+      source_data, last_measure = Cache.get_source_data(metric, args['period'])
+      analysis = DataAnalysis.get_data_analysis(source_data)
+      puts analysis, last_measure
     else
-      puts "Metric '#{args[:metric]}' not found" unless metric
-      puts "Not able to parse start date '#{args[:start]}'" unless start
+      puts "Metric '#{args[:metric]}' not found"
     end
   end
 
