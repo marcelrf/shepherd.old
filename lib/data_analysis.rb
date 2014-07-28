@@ -1,5 +1,5 @@
 class DataAnalysis
-  @@MIN_SAMPLE_ELEMENTS = 10
+  @@MIN_SAMPLE_ELEMENTS = 20
   @@BOOTSTRAPPING_ITERATIONS = 100
 
   def self.get_data_analysis(data)
@@ -11,11 +11,10 @@ class DataAnalysis
     slices = get_data_slices(control_data)
     percentiles = Hash.new{|h, k| h[k] = 0}
     divider = 0
-    slices.each do |slice|
+    slices.each_with_index do |slice, index|
       slice_percentiles = get_bootstrapping_percentiles(slice)
-      puts slice_percentiles
       slice_gap = slice_percentiles['high'] - slice_percentiles['low']
-      slice_compactness = 1.0 - slice_gap / control_gap
+      slice_compactness = (1.0 - slice_gap / control_gap) ** 10
       slice_percentiles.keys.each do |percentile|
         percentiles[percentile] += slice_percentiles[percentile] * slice_compactness
       end

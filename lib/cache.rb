@@ -1,7 +1,7 @@
 class Cache
   @@TIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ%z'
-  @@MAX_VALUES = 200
-  @@CHECK_DELAY = 5.minutes
+  @@MAX_VALUES = 2000
+  @@CHECK_DELAY = 25.minutes
 
   def self.get_source_data(metric, period)
     now = Time.now.utc - @@CHECK_DELAY
@@ -16,6 +16,7 @@ class Cache
     else
       start_time = end_time - @@MAX_VALUES.send(period)
       source_data = SourceData.get_source_data(metric, period, start_time, end_time)
+      puts source_data.size
     end
     cache_data_json = JSON.dump({
         'last_measured' => end_time,
