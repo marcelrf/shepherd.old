@@ -1,5 +1,5 @@
 class Metric < ActiveRecord::Base
-  attr_accessible :name, :polarity, :kind
+  attr_accessible :name, :polarity, :kind, :source_id
   has_many :observations
   belongs_to :source
 
@@ -9,7 +9,7 @@ class Metric < ActiveRecord::Base
 
   def state(period)
     observations = Observation.where(:metric_id => self['id'], :period => period)
-    observations.sort_by{|observation| observation.start}[-1]
+    observations.sort_by{|observation| observation.time}[-1]
   end
 
   def to_hash
