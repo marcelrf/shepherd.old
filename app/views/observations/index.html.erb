@@ -5,26 +5,21 @@
 <table class="table table-striped">
   <thead>
     <tr>
-      <th><%= model_class.human_attribute_name(:metric) %></th>
       <th><%= model_class.human_attribute_name(:divergence) %></th>
-      <th><%= model_class.human_attribute_name(:start) %></th>
+      <th><%= model_class.human_attribute_name(:source) %></th>
+      <th><%= model_class.human_attribute_name(:metric) %></th>
       <th><%= model_class.human_attribute_name(:period) %></th>
-      <th><%= model_class.human_attribute_name(:observed_at) %></th>
-      <th><%=t '.actions', :default => t("helpers.actions") %></th>
+      <th><%= model_class.human_attribute_name(:last_checked) %></th>
     </tr>
   </thead>
   <tbody>
     <% @observations.each do |observation| %>
       <tr>
+        <td><%= DataAnalysis.get_divergence(observation.to_hash) %></td>
+        <td><%= observation.metric.source.name %></td>
         <td><%= observation.metric.name %></td>
-        <td><%= (observation.divergence > 0 ? '+' : '') + observation.divergence.round(2).to_s %></td>
-        <td><%= observation.start %></td>
         <td><%= observation.period %></td>
-        <td><%= observation.updated_at %></td>
-        <td>
-          <%= link_to t('.show', :default => t("helpers.links.show")),
-                      observation_path(observation), :class => 'btn btn-mini' %>
-        </td>
+        <td><%= observation.time %></td>
       </tr>
     <% end %>
   </tbody>

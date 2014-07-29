@@ -1,5 +1,5 @@
 class Observation < ActiveRecord::Base
-  attr_accessible :metric, :time, :period, :low, :median, :high, :value, :data
+  attr_accessible :metric, :time, :period, :low, :median, :high, :value
   belongs_to :metric
 
   validates_associated :metric
@@ -16,5 +16,9 @@ class Observation < ActiveRecord::Base
     observation_info.delete('created_at')
     observation_info.delete('updated_at')
     observation_info
+  end
+
+  def divergence
+    DataAnalysis.get_divergence(self.to_hash)
   end
 end
