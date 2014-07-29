@@ -4,6 +4,7 @@ Shepherd::Application.routes.draw do
 
   match '/maps/:period' => 'maps#show'
   
-  resources :observations
+  resources :sources
   resources :metrics
+  resources :observations
 end
