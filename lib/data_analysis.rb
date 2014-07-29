@@ -1,6 +1,6 @@
 class DataAnalysis
   @@MIN_SAMPLE_ELEMENTS = 20
-  @@BOOTSTRAPPING_ITERATIONS = 100
+  @@BOOTSTRAPPING_ITERATIONS = 10
 
   def self.get_data_analysis(data)
     control_data, current_data = data[0...-1], data[-1]
