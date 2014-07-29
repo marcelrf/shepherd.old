@@ -5,24 +5,20 @@
 <table class="table table-striped">
   <thead>
     <tr>
-      <th><%= model_class.human_attribute_name(:name) %></th>
-      <th><%= model_class.human_attribute_name(:tags) %></th>
       <th><%= model_class.human_attribute_name(:source) %></th>
-      <th><%= model_class.human_attribute_name(:check_every) %></th>
-      <th><%= model_class.human_attribute_name(:enabled) %></th>
-      <th><%= model_class.human_attribute_name(:last_check) %></th>
+      <th><%= model_class.human_attribute_name(:name) %></th>
+      <th><%= model_class.human_attribute_name(:polarity) %></th>
+      <th><%= model_class.human_attribute_name(:kind) %></th>
       <th><%=t '.actions', :default => t("helpers.actions") %></th>
     </tr>
   </thead>
   <tbody>
     <% @metrics.each do |metric| %>
       <tr>
+        <td><%= metric.source.name %></td>
         <td><%= metric.name %></td>
-        <td><%= metric.tags %></td>
-        <td><%= metric.source_info['name'] %></td>
-        <td><%= metric.check_every %></td>
-        <td><%= metric.enabled %></td>
-        <td><%= metric.last_check ? metric.last_check : 'None' %></td>
+        <td><%= metric.polarity %></td>
+        <td><%= metric.kind %></td>
         <td>
           <%= link_to t('.show', :default => t("helpers.links.show")),
                       metric_path(metric), :class => 'btn btn-mini' %>
