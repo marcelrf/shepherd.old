@@ -63,7 +63,6 @@ ActiveRecord::Schema.define(:version => 20140725024110) do
     t.float    "median"
     t.float    "high"
     t.float    "value"
-    t.string   "data"
     t.datetime "created_at", :null => false
     t.datetime "updated_at", :null => false
   end
