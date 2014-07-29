@@ -30,7 +30,7 @@
                                  background-color:<%= cell_color(metric, state) %>"
                         <% if metric %>
                           title="<%= metric.name %>
-                                 <%= state ? state.start : '' %>
+                                 <%= state ? state.time : '' %>
                                  <%= state ? state.period : '' %>
                                  <%= format_divergence(metric, state) %>"
                         <% end %> >
