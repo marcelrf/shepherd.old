@@ -8,7 +8,6 @@ class CreateObservations < ActiveRecord::Migration
       t.float :median
       t.float :high
       t.float :value
-      t.string :data
 
       t.timestamps
     end
