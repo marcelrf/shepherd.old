@@ -44,7 +44,7 @@ class Manager
           observation_info['metric'] = metric
           observation = (Observation.where(
             :metric_id => metric.id,
-            :period => check_period
+            :period => check['period']
           ).first || Observation.new)
           updated = observation.update_attributes(observation_info)
           registered += 1 if updated
