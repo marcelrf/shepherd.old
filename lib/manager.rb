@@ -42,6 +42,7 @@ class Manager
         if observation_json
           observation_info = JSON.parse(observation_json)
           observation_info['metric'] = metric
+          observation_info['time'] = DateTime.strptime(observation_info['time'].to_s, '%s')
           observation = (Observation.where(
             :metric_id => metric.id,
             :period => check['period']
