@@ -1,8 +1,8 @@
 
 short_range:
   periods: hour
-  workers: 10
+  workers: 3
 
 long_range:
-  periods: day week month
+  periods: day
   workers: 1
