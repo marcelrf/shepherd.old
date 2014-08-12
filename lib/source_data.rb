@@ -8,7 +8,12 @@ class SourceData
     source_data = []
     intervals = divide_time_range(start_time, end_time, 'hour', 100)
     intervals.each do |interval_start, interval_end|
-      source_data += get_interval_data(metric, interval_start, interval_end)
+      interval_data = get_interval_data(metric, interval_start, interval_end)
+      if interval_data
+        source_data += interval_data
+      elsif source_data.size > 0
+        return nil
+      end
     end
     group_data_by_period(source_data, period)
   end
@@ -35,13 +40,17 @@ class SourceData
       :username => metric.source.username,
       :password => metric.source.password
     }
-    response = HTTParty.get(url, :basic_auth => basic_auth)
-    response['measurements'].first[1].map do |value|
-      if metric.kind == 'counter'
-        value['sum']
-      elsif metric.kind == 'gauge'
-        value['value']
+    measurements = HTTParty.get(url, :basic_auth => basic_auth)['measurements']
+    if measurements
+      measurements.first[1].map do |value|
+        if metric.kind == 'counter'
+          value['sum']
+        elsif metric.kind == 'gauge'
+          value['value']
+        end
       end
+    else
+      nil
     end
   end
 
@@ -49,9 +58,12 @@ class SourceData
     if period == 'hour'
       data
     elsif period == 'day'
-      data.each_slice(24).map do |daily_data|
+      days = data.reverse.each_slice(24)
+      days = days.select { |day| day.size == 24 }
+      days = days.map do |daily_data|
         daily_data.inject{|sum, elem| sum + elem }
       end
+      days.reverse
     end
   end
 
