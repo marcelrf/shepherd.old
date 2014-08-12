@@ -1,6 +1,6 @@
 class Manager
   @@TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ%z"
-  @@MAX_SCHEDULED_TIME = 10.minutes
+  @@MAX_SCHEDULED_TIME = {'hour' => 1.minutes, 'day' => 10.minutes}
   @@CHECK_DELAY = 5.minutes
   @@CHECK_PERIODS = ['day', 'hour']
 
@@ -103,7 +103,8 @@ class Manager
       check_json = check_to_json(check)
       unless checks_to_do.include?(check_json)
         scheduled_at = $redis.hget('scheduled_at', check_json)
-        unless scheduled_at && Time.strptime(scheduled_at, @@TIME_FORMAT).utc > now - @@MAX_SCHEDULED_TIME
+        schedule_limit = now - @@MAX_SCHEDULED_TIME[check['period']]
+        unless scheduled_at && Time.strptime(scheduled_at, @@TIME_FORMAT).utc > schedule_limit
           queue_key = get_queue_key(check)
           $redis.multi do
             $redis.lpush(queue_key, check_json)
