@@ -1,6 +1,9 @@
 class Cache
   @@TIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ%z'
-  @@MAX_VALUES = 2000
+  @@MAX_VALUES = {
+    'hour' => 2000,
+    'day' => 700
+  }
   @@CHECK_DELAY = 25.minutes
 
   def self.get_source_data(metric, period)
@@ -12,11 +15,12 @@ class Cache
       cache_data = JSON.load(cache_data_json)
       start_time = Time.parse(cache_data['last_measured'], @@TIME_FORMAT).utc
       new_data = SourceData.get_source_data(metric, period, start_time, end_time)
-      source_data = (cache_data['values'] + new_data)[-@@MAX_VALUES..-1]
+      compound_data = cache_data['values'] + new_data
+      negative_index = -[@@MAX_VALUES[period], compound_data.size].min
+      source_data = compound_data[negative_index..-1]
     else
-      start_time = end_time - @@MAX_VALUES.send(period)
+      start_time = end_time - @@MAX_VALUES[period].send(period)
       source_data = SourceData.get_source_data(metric, period, start_time, end_time)
-      puts source_data.size
     end
     cache_data_json = JSON.dump({
         'last_measured' => end_time,
