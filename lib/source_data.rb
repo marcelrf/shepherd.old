@@ -7,12 +7,12 @@ class SourceData
   def self.get_source_data(metric, period, start_time, end_time)
     source_data = []
     intervals = divide_time_range(start_time, end_time, 'hour', 100)
-    intervals.each do |interval_start, interval_end|
+    intervals.reverse.each do |interval_start, interval_end|
       interval_data = get_interval_data(metric, interval_start, interval_end)
       if interval_data
-        source_data += interval_data
-      elsif source_data.size > 0
-        return nil
+        source_data = interval_data + source_data
+      else
+        break
       end
     end
     group_data_by_period(source_data, period)
@@ -40,9 +40,10 @@ class SourceData
       :username => metric.source.username,
       :password => metric.source.password
     }
-    measurements = HTTParty.get(url, :basic_auth => basic_auth)['measurements']
+    response = HTTParty.get(url, :basic_auth => basic_auth)
+    measurements = response && response['measurements']
     if measurements
-      measurements.first[1].map do |value|
+      return measurements.first[1].map do |value|
         if metric.kind == 'counter'
           value['sum']
         elsif metric.kind == 'gauge'
@@ -50,7 +51,7 @@ class SourceData
         end
       end
     else
-      nil
+      return nil
     end
   end
 
@@ -67,14 +68,14 @@ class SourceData
     end
   end
 
-  def self.get_metrics(source, pattern)
+  def self.get_metrics(source, pattern, thorough = false)
     basic_auth = {
       :username => source.username,
       :password => source.password
     }
     page_offset, page_length = 0, 100
     page_data, metrics = {}, []
-    while page_data.empty? || page_offset < page_data['query']['found']
+    while page_data.empty? || thorough && page_offset < page_data['query']['found']
       url = @@URL_ROOT + (@@METRICS_TEMPLATE % [pattern, page_offset, page_length])
       page_data = HTTParty.get(url, :basic_auth => basic_auth)
       metrics += page_data['metrics']
