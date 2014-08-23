@@ -23,14 +23,18 @@ module MapsHelper
   end
 
   def cell_color(metric, state)
-    if !metric || !state || state.divergence == 0
+    if !metric
+      "#F0F0F0"
+    elsif !state
+      "#CCCCFF"
+    elsif state.divergence <= 1 && state.divergence >= -1
       "#FFFFFF"
-    elsif state.divergence > 0
-      red_blue = (255 - (-1 / ((state.divergence / 4) ** 2 + 1) + 1) * 255).to_i.to_s(16)
+    elsif state.divergence > 1
+      red_blue = (255 - (-1 / (((state.divergence - 1) / 3) ** 2 + 1) + 1) * 255).to_i.to_s(16)
       red_blue = "0#{red_blue}" if red_blue.size == 1
       "##{red_blue}FF#{red_blue}"
     else
-      green_blue = (255 - (-1 / ((-state.divergence / 4) ** 2 + 1) + 1) * 255).to_i.to_s(16)
+      green_blue = (255 - (-1 / (((-state.divergence - 1) / 3) ** 2 + 1) + 1) * 255).to_i.to_s(16)
       green_blue = "0#{green_blue}" if green_blue.size == 1
       "#FF#{green_blue}#{green_blue}"
     end
@@ -43,7 +47,7 @@ module MapsHelper
       if state.divergence >= 0
         "+#{state.divergence}"
       else
-        "-#{state.divergence}"
+        "#{state.divergence}"
       end
     else
       "Still no data"
