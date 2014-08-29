@@ -1,0 +1,5 @@
+<% metrics.each do |metric| %>
+  <div class="controls metric-checkbox">
+    <input name="metric_list[]" type="checkbox" value="<%= metric %>"> <%= metric %>
+  </div>
+<% end %>
