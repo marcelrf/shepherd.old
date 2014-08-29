@@ -2,7 +2,7 @@ class Manager
   @@TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ%z"
   @@MAX_SCHEDULED_TIME = {'hour' => 3.minutes, 'day' => 15.minutes}
   @@CHECK_DELAY = 5.minutes
-  @@CHECK_PERIODS = ['day']
+  @@CHECK_PERIODS = ['hour']
 
   def initialize
     @CHECK_QUEUES = get_check_queues
