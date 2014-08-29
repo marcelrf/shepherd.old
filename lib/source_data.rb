@@ -42,7 +42,7 @@ class SourceData
     }
     response = HTTParty.get(url, :basic_auth => basic_auth)
     measurements = response && response['measurements']
-    if measurements
+    if measurements && measurements.first
       return measurements.first[1].map do |value|
         if metric.kind == 'counter'
           value['sum']
