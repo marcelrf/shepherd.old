@@ -5,21 +5,19 @@
 <table class="table table-striped">
   <thead>
     <tr>
-      <th><%= model_class.human_attribute_name(:divergence) %></th>
       <th><%= model_class.human_attribute_name(:source) %></th>
       <th><%= model_class.human_attribute_name(:metric) %></th>
-      <th><%= model_class.human_attribute_name(:period) %></th>
       <th><%= model_class.human_attribute_name(:last_checked) %></th>
+      <th><%= model_class.human_attribute_name(:divergence) %></th>
     </tr>
   </thead>
   <tbody>
     <% @observations.each do |observation| %>
       <tr>
-        <td><%= DataAnalysis.get_divergence(observation.to_hash) %></td>
         <td><%= observation.metric.source.name %></td>
         <td><%= observation.metric.name %></td>
-        <td><%= observation.period %></td>
         <td><%= observation.time %></td>
+        <td><%= DataAnalysis.get_divergence(observation.to_hash) %></td>
       </tr>
     <% end %>
   </tbody>
