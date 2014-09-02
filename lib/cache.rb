@@ -1,7 +1,7 @@
 class Cache
   @@TIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ%z'
   @@MAX_VALUES = {
-    'hour' => 2000,
+    'hour' => 2700,
     'day' => 700
   }
   @@CHECK_DELAY = 25.minutes
@@ -22,6 +22,7 @@ class Cache
       start_time = end_time - @@MAX_VALUES[period].send(period)
       source_data = SourceData.get_source_data(metric, period, start_time, end_time)
     end
+    source_data = crop_initial_outliers(source_data)
     cache_data_json = JSON.dump({
         'last_measured' => end_time,
         'values' => source_data
@@ -36,5 +37,16 @@ class Cache
       'metric' => metric.id,
       'period' => period
     })
+  end
+
+  def self.crop_initial_outliers(data)
+    min, max = data.min, data.max
+    gap = max - min
+    lower_threshold = min + 0.1 * gap
+    higher_threshold = max - 0.1 * gap
+    first_valid = data.index do |value|
+      value > lower_threshold && value < higher_threshold
+    end
+    data[first_valid..-1]
   end
 end

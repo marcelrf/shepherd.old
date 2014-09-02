@@ -9,11 +9,7 @@ class SourceData
     intervals = divide_time_range(start_time, end_time, 'hour', 100)
     intervals.reverse.each do |interval_start, interval_end|
       interval_data = get_interval_data(metric, interval_start, interval_end)
-      if interval_data
-        source_data = interval_data + source_data
-      else
-        break
-      end
+      source_data = interval_data + source_data
     end
     group_data_by_period(source_data, period)
   end
@@ -42,17 +38,26 @@ class SourceData
     }
     response = HTTParty.get(url, :basic_auth => basic_auth)
     measurements = response && response['measurements']
+    data_by_measure_time = {}
     if measurements && measurements.first
-      return measurements.first[1].map do |value|
+      measurements.first[1].each do |measurement|
         if metric.kind == 'counter'
-          value['sum']
+          value = measurement['sum']
         elsif metric.kind == 'gauge'
-          value['value']
+          value = measurement['value']
         end
+        measure_time = Time.at(measurement['measure_time'])
+        data_by_measure_time[measure_time] = value
       end
-    else
-      return nil
     end
+    data = []
+    time_index = start_time
+    while time_index < end_time
+      value = data_by_measure_time[time_index]
+      data.push(value ? value : 0)
+      time_index += 1.hour
+    end
+    return data
   end
 
   def self.group_data_by_period(data, period)

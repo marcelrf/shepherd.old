@@ -1,5 +1,4 @@
 class DataAnalysis
-  @@MIN_SAMPLE_ELEMENTS = 20
   @@BOOTSTRAPPING_ITERATIONS = 10
 
   def self.get_data_analysis(data)
@@ -14,11 +13,14 @@ class DataAnalysis
     slices.each_with_index do |slice, index|
       slice_percentiles = get_bootstrapping_percentiles(slice)
       slice_gap = slice_percentiles['high'] - slice_percentiles['low']
-      slice_compactness = (1.0 - slice_gap / control_gap) ** 10
+      slice_compactness = (1.0 - slice_gap / control_gap) ** 50
+      slice_trust = get_slice_trust(slice.size)
+      slice_factor = slice_compactness * slice_trust
+      # print "#{slice_factor} #{slice_compactness} #{slice_trust} #{index} #{slice_percentiles}\n"
       slice_percentiles.keys.each do |percentile|
-        percentiles[percentile] += slice_percentiles[percentile] * slice_compactness
+        percentiles[percentile] += slice_percentiles[percentile] * slice_factor
       end
-      divider += slice_compactness
+      divider += slice_factor
     end
     percentiles.keys.each do |percentile|
       percentiles[percentile] /= divider
@@ -39,11 +41,11 @@ class DataAnalysis
   def self.get_data_slices(data)
     reversed_data = data.reverse
     samples = []
-    divider = 1
-    while data.size / divider >= @@MIN_SAMPLE_ELEMENTS
+    dividers = [1, 7, 24, 30, 168]
+    while dividers.size > 0
+      divider = dividers.shift
       sample = reversed_data.each_slice(divider).map{|slice| slice.last}
       samples.push(sample.reverse)
-      divider += 1
     end
     samples
   end
@@ -118,5 +120,10 @@ class DataAnalysis
         deviation / (analysis['median'] - analysis['low'])
       end
     end
+  end
+
+  def self.get_slice_trust(size)
+    enclosed_size = [size, 30].min
+    (Math.cos((((enclosed_size / 30.to_f) ** 2) - 1) * Math::PI) + 1) / 2
   end
 end
