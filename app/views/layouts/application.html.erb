@@ -36,26 +36,17 @@
   </head>
   <body>
 
-    <!--div class="navbar navbar-fluid-top">
-      <div class="navbar-inner">
-        <div class="container-fluid">
-          <a class="btn btn-navbar" data-target=".nav-collapse" data-toggle="collapse">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </a>
-          <a class="brand" href="#">Shepherd</a>
-          <div class="container-fluid nav-collapse">
-            <ul class="nav">
-              <li><%= link_to "Hour", "/maps/hour" %></li>
-              <li><%= link_to "Day", "/maps/day" %></li>
-              <li><%= link_to "Week", "/maps/week" %></li>
-              <li><%= link_to "Month", "/maps/month" %></li>
-            </ul>
-          </div>
-        </div>
+    <div id="navbar" class="navbar navbar-default" role="navigation">
+      <div class="container-fluid">
+        <ul class="nav nav-pills">
+          <li><%= link_to "SHEPHERD", "/" %></li>
+          <li <%= params[:controller] == 'sources' ? 'class=active' : '' %>><%= link_to "Sources", "/sources" %></li>
+          <li <%= params[:controller] == 'metrics' ? 'class=active' : '' %>><%= link_to "Metrics", "/metrics" %></li>
+          <li <%= params[:controller] == 'observations' ? 'class=active' : '' %>><%= link_to "Observations", "/observations" %></li>
+          <li <%= params[:controller] == 'maps' ? 'class=active' : '' %>><%= link_to "Maps", "/maps" %></li>
+        </ul>
       </div>
-    </div-->
+    </div>
 
     <div class="container-fluid">
       <div class="row-fluid">

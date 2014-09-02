@@ -3,6 +3,7 @@ Shepherd::Application.routes.draw do
   ActiveAdmin.routes(self)
 
   match '/maps' => 'maps#show', :period => 'hour'
+  match '/', :to => redirect('/maps')
   match '/metrics/autocomplete' => 'metrics#autocomplete'
   
   resources :sources
