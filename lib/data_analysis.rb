@@ -1,5 +1,5 @@
 class DataAnalysis
-  @@BOOTSTRAPPING_ITERATIONS = 10
+  @@BOOTSTRAPPING_ITERATIONS = 100
 
   def self.get_data_analysis(data)
     control_data, current_data = data[0...-1], data[-1]
@@ -124,6 +124,6 @@ class DataAnalysis
 
   def self.get_slice_trust(size)
     enclosed_size = [size, 30].min
-    (Math.cos((((enclosed_size / 30.to_f) ** 2) - 1) * Math::PI) + 1) / 2
+    (Math.cos((((enclosed_size / 30.to_f) ** 2.5) - 1) * Math::PI) + 1) / 2
   end
 end
