@@ -53,4 +53,8 @@ module MapsHelper
       "Still no data"
     end
   end
+
+  def chart_url(metric)
+      "https://metrics.librato.com/metrics/#{metric.name}?duration=1500000"
+  end
 end

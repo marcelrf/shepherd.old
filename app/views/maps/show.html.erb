@@ -31,9 +31,12 @@
                         <% if metric %>
                           title="<%= metric.name %>
                                  <%= state ? state.time : '' %>
-                                 <%= state ? state.period : '' %>
                                  <%= format_divergence(metric, state) %>"
                         <% end %> >
+                        <% if metric %>
+                          <a href="<%= chart_url(metric) %>"
+                             target="_blank"></a>
+                        <% end %>
                       </td>
                     <% end %>
                   </tr>

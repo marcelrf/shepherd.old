@@ -13,3 +13,13 @@ table.map td {
 .map-name {
   font-size: 8px;
 }
+
+td a {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+td a:hover {
+    background-color: initial;
+}
