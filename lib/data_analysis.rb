@@ -1,5 +1,6 @@
 class DataAnalysis
   @@BOOTSTRAPPING_ITERATIONS = 100
+  @@MIN_SAMPLE_SIZE = 10
 
   def self.get_data_analysis(data)
     control_data, current_data = data[0...-1], data[-1]
@@ -11,6 +12,7 @@ class DataAnalysis
     percentiles = Hash.new{|h, k| h[k] = 0}
     divider = 0
     slices.each_with_index do |slice, index|
+      next if slice.size < @@MIN_SAMPLE_SIZE
       slice_percentiles = get_bootstrapping_percentiles(slice)
       slice_gap = slice_percentiles['high'] - slice_percentiles['low']
       slice_compactness = (1.0 - slice_gap / control_gap) ** 50
@@ -102,7 +104,7 @@ class DataAnalysis
       values.size.times do
         # multiply random float between 0 an 1 by 0.3
         # to give more weight to recent values
-        sample.push(values[((rand ** 0.5) * values.size).to_i])
+        sample.push(values[((rand ** 0.3) * values.size).to_i])
       end
       samples.push(sample)
     end
