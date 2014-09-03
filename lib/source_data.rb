@@ -32,11 +32,12 @@ class SourceData
       start_time.to_i,
       (end_time - 1.second).to_i
     ])
-    basic_auth = {
-      :username => metric.source.username,
-      :password => metric.source.password
-    }
-    response = HTTParty.get(url, :basic_auth => basic_auth)
+    # basic_auth = {
+    #   :username => metric.source.username,
+    #   :password => metric.source.password
+    # }
+    # response = HTTParty.get(url, :basic_auth => basic_auth)
+    response = http_get(url, metric.source.username, metric.source.password)
     measurements = response && response['measurements']
     data_by_measure_time = {}
     if measurements && measurements.first
@@ -74,20 +75,32 @@ class SourceData
   end
 
   def self.get_metrics(source, pattern, thorough = false)
-    basic_auth = {
-      :username => source.username,
-      :password => source.password
-    }
+    # basic_auth = {
+    #   :username => source.username,
+    #   :password => source.password
+    # }
     page_offset, page_length = 0, 100
     page_data, metrics = {}, []
     while page_data.empty? || thorough && page_offset < page_data['query']['found']
       url = @@URL_ROOT + (@@METRICS_TEMPLATE % [pattern, page_offset, page_length])
-      page_data = HTTParty.get(url, :basic_auth => basic_auth)
+      page_data = http_get(url, source.username, source.password)
+      # page_data = HTTParty.get(url, :basic_auth => basic_auth)
       metrics += page_data['metrics']
       page_offset += page_length
     end
     metrics.map do |metric|
       metric['name']
     end
+  end
+
+  def self.http_get(url, username, password)
+    uri = URI(url)
+    response = nil
+    Net::HTTP.start(uri.host, uri.port, :use_ssl => true) do |http|
+      request = Net::HTTP::Get.new(uri)
+      request.basic_auth(username, password)
+      response = http.request(request)
+    end
+    JSON.load(response.body)
   end
 end
