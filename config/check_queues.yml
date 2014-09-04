@@ -1,8 +1,0 @@
-
-short_range:
-  periods: hour
-  workers: 3
-
-long_range:
-  periods: day
-  workers: 1

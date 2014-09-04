@@ -1,66 +1,42 @@
 class Worker
-  @@TIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ%z'
+  @@CHECK_DELAY = 30.minutes
+  @@CHECK_PERIODS = ['hour']
 
-  def initialize
-    @QUEUE_WORKERS = get_queue_workers
-  end
-
-  def get_queue_workers(filename=nil)
-    filename ||= Rails.root.join('config/check_queues.yml').to_s
-    check_queues = YAML.load(File.read(filename))
-    queue_workers = {}
-    check_queues.each do |queue_name, queue_infos|
-      queue_workers[queue_name] = queue_infos['workers']
-    end
-    queue_workers
-  end
-
-  def work(queue)
-    loop do
-      work_on_queue_until_empty(queue)
-      break unless work_on_random_check
+  def work
+    get_new_checks.each do |check|
+      execute(check)
     end
   end
 
-  def work_on_queue_until_empty(queue)
-    loop do
-      check_json = $redis.rpop(queue)
-      if check_json
-        execute_check(check_json)
-      else
-        break
+  def get_new_checks
+    now = Time.now.utc - @@CHECK_DELAY
+    checks = []
+    Metric.all.each do |metric|
+      @@CHECK_PERIODS.each do |period|
+        check_time = TimeUtils.get_cropped_time(now, period)
+        observation = Observation.where(
+          :metric_id => metric.id,
+          :period => period,
+          :time => check_time,
+        ).first
+        unless observation
+          checks.push({'metric' => metric, 'period' => period})
+        end
       end
     end
+    checks
   end
 
-  def work_on_random_check
-    check_json = nil
-    @QUEUE_WORKERS.keys.shuffle.each do |queue|
-      check_json = $redis.rpop(queue)
-      break if check_json
-    end
-    execute_check(check_json) if check_json
-    !!check_json
-  end
-
-  def execute_check(check_json)
-    check = json_to_check(check_json)
-    source_data, check_time = Cache.get_source_data(check['metric'], check['period'])
+  def execute(check)
+    metric, period = check['metric'], check['period']
+    Rails.logger.info "[#{Time.now.utc}] WORKER: Checking #{metric.name} (#{period})."
+    source_data, check_time = Cache.get_source_data(metric, period)
     analysis = DataAnalysis.get_data_analysis(source_data)
-    analysis['period'] = check['period']
-    analysis['time'] = check_time.to_i
-    $redis.multi do
-      $redis.hset('observations', check_json, JSON.dump(analysis))
-      $redis.sadd('done_checks', check_json)
-    end
-  end
-
-  def json_to_check(check_json)
-    check = JSON.load(check_json)
-    metric_json = $redis.hget('metrics', check_json)
-    metric_info = JSON.load(metric_json)
-    check['metric'] = Metric.new(metric_info)
-    check['metric'].id = metric_info['id']
-    check
+    analysis['metric'] = metric
+    analysis['period'] = period
+    analysis['time'] = check_time
+    observation = Observation.where(:metric_id => metric.id, :period => period).first
+    (observation || Observation.new).update_attributes(analysis)
+    Rails.logger.info "[#{Time.now.utc}] WORKER: Done!"
   end
 end
