@@ -1,9 +1,16 @@
-
-<div id="option-container">
+<div id="panel form">
   <form method="get">
-    <input name="filter" type="text" value="<%= @filter %>" />
-    <input name="group" type="text" value="<%= @group %>" />
-    <input type="submit" value="Go" class="btn" />
+    <div class="row">
+      <div class="col-lg-5">
+        <input name="filter" type="text" value="<%= @filter %>" placeholder="filter"/>
+      </div>
+      <div class="col-lg-5">
+        <input name="group" type="text" value="<%= @group %>" placeholder="group by"/>
+        <span class="input-group-btn">
+          <button type="submit" value="Go" class="btn btn-success" />
+        </span>
+      </div>
+    </div>
   </form>
 </div>
 
