@@ -4,7 +4,11 @@ class Worker
 
   def work
     get_new_checks.each do |check|
-      execute(check)
+      begin
+        execute(check)
+      rescue Exception => e
+        Rails.logger.info "[#{Time.now.utc}] WORKER ERROR: #{e}"
+      end
     end
   end
 
@@ -37,6 +41,5 @@ class Worker
     analysis['time'] = check_time
     observation = Observation.where(:metric_id => metric.id, :period => period).first
     (observation || Observation.new).update_attributes(analysis)
-    Rails.logger.info "[#{Time.now.utc}] WORKER: Done!"
   end
 end
