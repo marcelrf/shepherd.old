@@ -15,9 +15,9 @@ class DataAnalysis
       next if slice.size < @@MIN_SAMPLE_SIZE
       slice_percentiles = get_bootstrapping_percentiles(slice)
       slice_gap = slice_percentiles['high'] - slice_percentiles['low']
-      slice_compactness = (1.0 - slice_gap / control_gap) ** 30
+      slice_compactness = (1.0 - slice_gap / control_gap)
       slice_trust = get_slice_trust(slice.size)
-      slice_factor = slice_compactness * slice_trust
+      slice_factor = (slice_compactness * slice_trust) ** 50
       # print "#{slice_factor} #{slice_compactness} #{slice_trust} #{index} #{slice_percentiles}\n"
       slice_percentiles.keys.each do |percentile|
         percentiles[percentile] += slice_percentiles[percentile] * slice_factor
@@ -43,7 +43,7 @@ class DataAnalysis
   def self.get_data_slices(data)
     reversed_data = data.reverse
     samples = []
-    dividers = [1, 24, 168]
+    dividers = [1, 24, 168] # TODO: add new slices when using other periods than hour!
     while dividers.size > 0
       divider = dividers.shift
       sample = reversed_data.each_slice(divider).map{|slice| slice.last}
@@ -126,6 +126,6 @@ class DataAnalysis
 
   def self.get_slice_trust(size)
     enclosed_size = [size, 30].min
-    (Math.cos((((enclosed_size / 30.to_f) ** 2.5) - 1) * Math::PI) + 1) / 2
+    (Math.cos((((enclosed_size / 30.to_f) ** 2) - 1) * Math::PI) + 1) / 2
   end
 end
