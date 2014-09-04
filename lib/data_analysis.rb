@@ -15,7 +15,7 @@ class DataAnalysis
       next if slice.size < @@MIN_SAMPLE_SIZE
       slice_percentiles = get_bootstrapping_percentiles(slice)
       slice_gap = slice_percentiles['high'] - slice_percentiles['low']
-      slice_compactness = (1.0 - slice_gap / control_gap) ** 10
+      slice_compactness = (1.0 - slice_gap / control_gap) ** 30
       slice_trust = get_slice_trust(slice.size)
       slice_factor = slice_compactness * slice_trust
       # print "#{slice_factor} #{slice_compactness} #{slice_trust} #{index} #{slice_percentiles}\n"
@@ -43,7 +43,7 @@ class DataAnalysis
   def self.get_data_slices(data)
     reversed_data = data.reverse
     samples = []
-    dividers = [1, 7, 24, 30, 168]
+    dividers = [1, 24, 168]
     while dividers.size > 0
       divider = dividers.shift
       sample = reversed_data.each_slice(divider).map{|slice| slice.last}
