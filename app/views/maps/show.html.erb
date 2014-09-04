@@ -2,13 +2,15 @@
   <form method="get">
     <div class="row">
       <div class="col-lg-5">
-        <input name="filter" type="text" value="<%= @filter %>" placeholder="filter"/>
+        <input name="filter" type="text" class="form-control" value="<%= @filter %>" placeholder="filter"/>
       </div>
       <div class="col-lg-5">
-        <input name="group" type="text" value="<%= @group %>" placeholder="group by"/>
-        <span class="input-group-btn">
-          <button type="submit" value="Go" class="btn btn-success" />
-        </span>
+        <div class="input-group">
+          <input name="group" type="text" class="form-control" value="<%= @group %>" placeholder="group by"/>
+          <span class="input-group-btn">
+            <button type="submit" value="Go" class="btn btn-success" />
+          </span>
+        </div>
       </div>
     </div>
   </form>
