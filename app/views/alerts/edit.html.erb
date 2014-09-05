@@ -1,6 +1,5 @@
-<h1>Editing alert</h1>
-
-<%= render 'form' %>
-
-<%= link_to 'Show', @alert %> |
-<%= link_to 'Back', alerts_path %>
+<%- model_class = Alert -%>
+<div class="form-title">
+  <h4>Edit alert</h4>
+</div>
+<%= render :partial => 'alerts/form' %>
