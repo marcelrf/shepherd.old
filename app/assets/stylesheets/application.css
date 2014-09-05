@@ -13,19 +13,17 @@
  */
 
 #navbar {
-    background-color: #CCF0FF;
-    border-bottom: solid 1px #A5C3E0;
+    background-color: #FFFFFF;
 }
 
 #navbar a {
-    color: #444466;
-    text-shadow: 2px 2px 1px #A5C3E0;
+    color: #444444;
     font-weight: bold;
-    margin: 5px 0;
+    margin: 10px 0;
 }
 
 #navbar a:hover {
-    color: #333388;
+    color: #888888;
 };
 
 #navbar li.active a {
@@ -35,5 +33,11 @@
 #navbar .active a {
     color: white;
     text-shadow: none;
-    background-color: #2B63AA;
+    background-color: #AAAAAA;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+table tr th {
+    color: #888888;
 }
