@@ -22,14 +22,26 @@ class MetricsController < InheritedResources::Base
                 Metric.create!(params[:metric])
             end
         end
+        flash[:notice] = "Metrics were successfully created."
         redirect_to metrics_path
     else
         @metric = Metric.new(params[:metric])
         if @metric.save
-          redirect_to @metric
+          flash[:notice] = "Metric was successfully created."
+          redirect_to metrics_path
         else
           render "new"
         end
+    end
+  end
+
+  def update
+    @metric = Metric.find(params[:id])
+    if @metric.update_attributes(params[:metric])
+      flash[:notice] = "Metric was successfully updated."
+      redirect_to metrics_path
+    else
+      render "edit"
     end
   end
 end

@@ -1,5 +1,5 @@
 <%- model_class = Metric -%>
-<div class="page-header">
-  <h1><%=t '.title', :default => [:'helpers.titles.new', 'New %{model}'], :model => model_class.model_name.human.titleize %></h1>
+<div class="form-title">
+  <h4>New metric</h4>
 </div>
 <%= render :partial => 'metrics/form' %>
