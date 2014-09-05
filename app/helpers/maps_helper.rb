@@ -24,9 +24,9 @@ module MapsHelper
 
   def cell_color(metric, state)
     if !metric
-      "#F0F0F0"
+      "#FFFFFF"
     elsif !state
-      "#CCCCFF"
+      "#F0F0F0"
     elsif state.divergence <= 1 && state.divergence >= -1
       "#FFFFFF"
     elsif state.divergence > 1
@@ -55,6 +55,6 @@ module MapsHelper
   end
 
   def chart_url(metric)
-      "https://metrics.librato.com/metrics/#{metric.name}?duration=1500000"
+      "https://metrics.librato.com/metrics/#{metric.name}?duration=604800"
   end
 end

@@ -1,11 +1,11 @@
 
-<div id="option-container">
+<!-- <div id="option-container">
   <form method="get">
     <input name="filter" type="text" value="<%= @filter %>" />
     <input name="group" type="text" value="<%= @group %>" />
     <input type="submit" value="Go" class="btn" />
   </form>
-</div>
+</div> -->
 
 <% map_names = @maps.keys %>
 <div id="map-container">
@@ -18,7 +18,6 @@
           <% if @maps.size == 1 || map_name %>
             <% map = @maps[map_name] %>
             <td>
-              <span class="map-name"><%= map_name %></span><br />
               <table class="map" style="width:<%= group_column_width %>px;height:<%= group_row_height %>px">
                 <% map_columns, map_rows, map_column_width, map_row_height = table_measures(group_column_width, group_row_height, map.count) %>
                 <% map_rows.times do %>
@@ -29,6 +28,7 @@
                                  height:<%= map_row_height %>px;
                                  background-color:<%= cell_color(metric, state) %>"
                         <% if metric %>
+                          class="active"
                           title="<%= metric.name %>
                                  <%= state ? state.time : '' %>
                                  <%= format_divergence(metric, state) %>"
