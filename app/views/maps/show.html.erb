@@ -7,45 +7,63 @@
   </form>
 </div> -->
 
-<% map_names = @maps.keys %>
-<div id="map-container">
-  <table class="map-group">
-    <% group_columns, group_rows, group_column_width, group_row_height = table_measures(total_width, total_height, @maps.count) %>
-    <% group_rows.times do %>
-      <tr>
-        <% group_columns.times do %>
-          <% map_name = map_names.shift %>
-          <% if @maps.size == 1 || map_name %>
-            <% map = @maps[map_name] %>
-            <td>
-              <table class="map" style="width:<%= group_column_width %>px;height:<%= group_row_height %>px">
-                <% map_columns, map_rows, map_column_width, map_row_height = table_measures(group_column_width, group_row_height, map.count) %>
-                <% map_rows.times do %>
-                  <tr>
-                    <% map_columns.times do %>
-                      <% metric, state = map.shift %>
-                      <td style="width:<%= map_column_width %>px;
-                                 height:<%= map_row_height %>px;
-                                 background-color:<%= cell_color(metric, state) %>"
-                        <% if metric %>
-                          class="active"
-                          title="<%= metric.name %>
-                                 <%= state ? state.time : '' %>
-                                 <%= format_divergence(metric, state) %>"
-                        <% end %> >
-                        <% if metric %>
-                          <a href="<%= chart_url(metric) %>"
-                             target="_blank"></a>
-                        <% end %>
-                      </td>
-                    <% end %>
-                  </tr>
-                <% end %>
-              </table>
-            </td>
+<% if @width && @height %>
+
+  <script type="text/JavaScript">
+    setTimeout(function () {
+      location.reload(true);
+    }, 600000);
+  </script>
+
+  <% map_names = @maps.keys %>
+  <div id="map-container">
+    <table class="map-group">
+      <% group_columns, group_rows, group_column_width, group_row_height = table_measures(@width, @height, @maps.count) %>
+      <% group_rows.times do %>
+        <tr>
+          <% group_columns.times do %>
+            <% map_name = map_names.shift %>
+            <% if @maps.size == 1 || map_name %>
+              <% map = @maps[map_name] %>
+              <td>
+                <table class="map" style="width:<%= group_column_width %>px;height:<%= group_row_height %>px">
+                  <% map_columns, map_rows, map_column_width, map_row_height = table_measures(group_column_width, group_row_height, map.count) %>
+                  <% map_rows.times do %>
+                    <tr>
+                      <% map_columns.times do %>
+                        <% metric, state = map.shift %>
+                        <td style="width:<%= map_column_width %>px;
+                                   height:<%= map_row_height %>px;
+                                   background-color:<%= cell_color(metric, state ? state.divergence : nil) %>"
+                          <% if metric %>
+                            class="active<%= state ? ' ready' : '' %>"
+                            title="<%= metric.name %>
+                                   <%= state ? state.time : 'still working...' %>"
+                          <% end %> >
+                          <% if metric %>
+                            <a href="<%= chart_url(metric) %>"
+                               target="_blank"></a>
+                          <% end %>
+                        </td>
+                      <% end %>
+                    </tr>
+                  <% end %>
+                </table>
+              </td>
+            <% end %>
           <% end %>
-        <% end %>
-      </tr>
-    <% end %>
-  </table>
-</div>
+        </tr>
+      <% end %>
+    </table>
+  </div>
+
+<% else %>
+
+  <script type="text/JavaScript">
+    var current_url = location.href;
+    var separator = current_url.indexOf("?") > -1 ? "&" : "?";
+    var newParams = "width=" + window.innerWidth + "&height=" + window.innerHeight;
+    location.assign(location.href + separator + newParams);
+  </script>
+
+<% end %>

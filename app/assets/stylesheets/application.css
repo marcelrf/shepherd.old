@@ -41,3 +41,35 @@
 table tr th {
     color: #888888;
 }
+
+.btn {
+    color: #666666 !important;
+    text-shadow: none !important;
+    border-radius: 0 !important;
+    background-color: initial !important;
+    border: solid 1px #C8C8C8 !important;
+    box-shadow: none !important;
+    background-image: none !important;
+}
+
+.btn-primary {
+    background-color: #AAFFAA !important;
+}
+
+.btn-danger {
+    background-color: #FFAAAA !important;
+}
+
+.row-fluid {
+    margin-bottom: 20px;
+}
+
+.form-title {
+    margin: 50px 0 30px 180px;
+    color: #888888;
+}
+
+.form-actions {
+    background-color: initial !important;
+    border: 0 !important;
+}

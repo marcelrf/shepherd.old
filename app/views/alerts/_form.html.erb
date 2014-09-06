@@ -1,0 +1,21 @@
+<%= form_for @alert, :html => { :class => 'form-horizontal' } do |f| %>
+  <div class="control-group">
+    <%= f.label :metric, :class => 'control-label' %>
+    <div class="controls">
+      <%= f.text_field :metric_name, :class => 'span5' %>
+      <button id="autocomplete" class="btn" onclick="Alerts.autoCompleteName();">List matching</button>
+      <div id="loading"></div>
+    </div>
+  </div>
+  <div id="metric-list" class="control-group"></div>
+  <div class="control-group">
+    <%= f.label :recipients, :class => 'control-label' %>
+    <div class="controls">
+      <%= f.text_area :recipients, :class => 'span5', :style => 'height:100px' %>
+    </div>
+  </div>
+  <div class="form-actions">
+    <%= f.submit nil, :class => 'btn btn-primary' %>
+    <%= link_to t('.cancel', :default => t("helpers.links.cancel")), alerts_path, :class => 'btn' %>
+  </div>
+<% end %>

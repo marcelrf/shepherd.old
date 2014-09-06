@@ -1,23 +1,23 @@
-<%- model_class = Source -%>
+<%- model_class = Alert -%>
 <table class="table table-striped">
   <thead>
     <tr>
-      <th><%= model_class.human_attribute_name(:name) %></th>
-      <th><%= model_class.human_attribute_name(:username) %></th>
+      <th><%= model_class.human_attribute_name(:metric) %></th>
+      <th><%= model_class.human_attribute_name(:recipients) %></th>
       <th><%=t '.actions', :default => t("helpers.actions") %></th>
     </tr>
   </thead>
   <tbody>
-    <% @sources.each do |source| %>
+    <% @alerts.each do |alert| %>
       <tr>
-        <td><%= source.name %></td>
-        <td><%= source.username %></td>
+        <td><%= alert.metric.name %></td>
+        <td><%= alert.recipients %></td>
         <td>
           <div class="btn-group">
             <%= link_to t('.edit', :default => t("helpers.links.edit")),
-                        edit_source_path(source), :class => 'btn btn-mini' %>
+                        edit_alert_path(alert), :class => 'btn btn-mini' %>
             <%= link_to t('.destroy', :default => t("helpers.links.destroy")),
-                        source_path(source),
+                        alert_path(alert),
                         :method => :delete,
                         :data => { :confirm => t('.confirm', :default => t("helpers.links.confirm", :default => 'Are you sure?')) },
                         :class => 'btn btn-mini btn-danger' %>
@@ -29,5 +29,5 @@
 </table>
 
 <%= link_to t('.new', :default => t("helpers.links.new")),
-            new_source_path,
+            new_alert_path,
             :class => 'btn btn-primary' %>

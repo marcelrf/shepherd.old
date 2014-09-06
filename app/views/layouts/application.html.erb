@@ -40,10 +40,10 @@
       <div class="container-fluid">
         <ul class="nav nav-pills">
           <li><%= link_to "SHEPHERD", "/" %></li>
+          <li <%= params[:controller] == 'maps' ? 'class=active' : '' %>><%= link_to "Status", "/status" %></li>
           <li <%= params[:controller] == 'sources' ? 'class=active' : '' %>><%= link_to "Sources", "/sources" %></li>
           <li <%= params[:controller] == 'metrics' ? 'class=active' : '' %>><%= link_to "Metrics", "/metrics" %></li>
-          <li <%= params[:controller] == 'observations' ? 'class=active' : '' %>><%= link_to "Observations", "/observations" %></li>
-          <li <%= params[:controller] == 'maps' ? 'class=active' : '' %>><%= link_to "Maps", "/maps" %></li>
+          <li <%= params[:controller] == 'alerts' ? 'class=active' : '' %>><%= link_to "Alerts", "/alerts" %></li>
         </ul>
       </div>
     </div>
