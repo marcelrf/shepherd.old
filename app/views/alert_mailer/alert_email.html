@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta content='text/html; charset=UTF-8' http-equiv='Content-Type' />
+  </head>
+  <body>
+    <a href="<%= chart_url(@metric) %>"
+       style="background-color: <%= cell_color(@metric, @divergence) %>;
+              text-decoration: none;">
+      <div style="width: 200px;
+                  height: 200px;
+                  background-color: inherit;
+                  border: solid 1px #D0D0D0;
+                  color: #B0B0B0;">
+        <p style="margin: 175px 0 0 15px;">
+          Go to chart
+        </p>
+      </div>
+    </a>
+  </body>
+</html>

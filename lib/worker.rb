@@ -1,6 +1,7 @@
 class Worker
   @@CHECK_DELAY = 30.minutes
   @@CHECK_PERIODS = ['hour']
+  @@ALERT_THRESHOLD = 3
 
   def work
     get_new_checks.each do |check|
@@ -40,6 +41,25 @@ class Worker
     analysis['period'] = period
     analysis['time'] = check_time
     observation = Observation.where(:metric_id => metric.id, :period => period).first
+    alert_if_necessary(observation.divergence, analysis) if observation
     (observation || Observation.new).update_attributes(analysis)
+  end
+
+  def alert_if_necessary(old_divergence, analysis)
+    new_divergence = DataAnalysis.get_divergence(analysis)
+    d1, d2 = old_divergence, new_divergence
+    th = @@ALERT_THRESHOLD
+    # alert condition
+    if (d1 <   th && d2 >=  th ||
+        d1 >  -th && d2 <= -th ||
+        d1 >=  th && d2 <   1  ||
+        d1 <= -th && d2 >  -1)
+      # send alerts
+      Rails.logger.info "[#{Time.now.utc}] WORKER: Sending alerts for #{analysis['metric'].name}."
+      alerts = Alert.where(:metric_id => analysis['metric'].id)
+      alerts.each do |alert|
+        AlertMailer.alert_email(alert, new_divergence, analysis['time']).deliver!
+      end
+    end
   end
 end

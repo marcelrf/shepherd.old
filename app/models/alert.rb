@@ -16,4 +16,8 @@ class Alert < ActiveRecord::Base
   def metric_name
     self.metric ? self.metric.name : ''
   end
+
+  def recipient_list
+    return self.recipients.split(',').map{|r| r.strip}
+  end
 end
