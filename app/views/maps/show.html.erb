@@ -38,6 +38,7 @@
                           <% if metric %>
                             class="active<%= state ? ' ready' : '' %>"
                             title="<%= metric.name %>
+                                   <%= format_divergence(metric, state ? state.divergence : nil) %>
                                    <%= state ? state.time : 'still working...' %>"
                           <% end %> >
                           <% if metric %>

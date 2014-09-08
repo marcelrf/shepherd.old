@@ -37,12 +37,12 @@ module MapsHelper
       nil
     elsif divergence
       if divergence >= 0
-        "+#{divergence}"
+        "+#{divergence.round(2)}"
       else
-        "#{divergence}"
+        "#{divergence.round(2)}"
       end
     else
-      "Still no data"
+      ''
     end
   end
 
