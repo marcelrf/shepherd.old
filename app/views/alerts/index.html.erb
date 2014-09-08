@@ -3,6 +3,8 @@
   <thead>
     <tr>
       <th><%= model_class.human_attribute_name(:metric) %></th>
+      <th><%= model_class.human_attribute_name(:threshold) %></th>
+      <th><%= model_class.human_attribute_name(:subject) %></th>
       <th><%= model_class.human_attribute_name(:recipients) %></th>
       <th><%=t '.actions', :default => t("helpers.actions") %></th>
     </tr>
@@ -11,6 +13,8 @@
     <% @alerts.each do |alert| %>
       <tr>
         <td><%= alert.metric.name %></td>
+        <td><%= alert.threshold %></td>
+        <td><%= alert.subject %></td>
         <td><%= alert.recipients %></td>
         <td>
           <div class="btn-group">
