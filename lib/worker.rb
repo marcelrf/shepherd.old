@@ -1,16 +1,22 @@
 class Worker
   @@CHECK_DELAY = 30.minutes
   @@CHECK_PERIODS = ['hour']
-  @@ALERT_THRESHOLD = 3
 
   def work
-    get_new_checks.each do |check|
-      begin
-        execute(check)
-      rescue Exception => e
-        Rails.logger.info "[#{Time.now.utc}] WORKER ERROR: #{e}"
+    scheduled_alerts = Hash.new do |h, k|
+      h[k] = Hash.new do |h, k| # first key: recipient
+        h[k] = [] # second key: subject
+        # value: list of alerts for that recipient and subject
       end
     end
+    get_new_checks.each do |check|
+      begin
+        execute(check, scheduled_alerts)
+      rescue Exception => e
+        Rails.logger.info "[#{Time.now.utc}] WORKER ERROR: #{e.inspect}"
+      end
+    end
+    send_alerts(scheduled_alerts)
   end
 
   def get_new_checks
@@ -32,7 +38,7 @@ class Worker
     checks
   end
 
-  def execute(check)
+  def execute(check, scheduled_alerts)
     metric, period = check['metric'], check['period']
     Rails.logger.info "[#{Time.now.utc}] WORKER: Checking #{metric.name} (#{period})."
     source_data, check_time = Cache.get_source_data(metric, period)
@@ -41,24 +47,41 @@ class Worker
     analysis['period'] = period
     analysis['time'] = check_time
     observation = Observation.where(:metric_id => metric.id, :period => period).first
-    alert_if_necessary(observation.divergence, analysis) if observation
+    schedule_alerts(observation.divergence, analysis, scheduled_alerts) if observation
     (observation || Observation.new).update_attributes(analysis)
   end
 
-  def alert_if_necessary(old_divergence, analysis)
+  def schedule_alerts(old_divergence, analysis, scheduled_alerts)
     new_divergence = DataAnalysis.get_divergence(analysis)
-    d1, d2 = old_divergence, new_divergence
-    th = @@ALERT_THRESHOLD
-    # alert condition
-    if (d1 <   th && d2 >=  th ||
-        d1 >  -th && d2 <= -th ||
-        d1 >=  th && d2 <   1  ||
-        d1 <= -th && d2 >  -1)
-      # send alerts
-      Rails.logger.info "[#{Time.now.utc}] WORKER: Sending alerts for #{analysis['metric'].name}."
-      alerts = Alert.where(:metric_id => analysis['metric'].id)
-      alerts.each do |alert|
-        AlertMailer.alert_email(alert, new_divergence, analysis['time']).deliver!
+    metric_alerts = Alert.where(:metric_id => analysis['metric'].id)
+    metric_alerts.each do |alert|
+      if alert_condition(alert.threshold, old_divergence, new_divergence)
+        alert.recipient_list.each do |recipient|
+          scheduled_alerts[recipient][alert.subject].push({
+            :alert => alert,
+            :divergence => new_divergence,
+            :time => analysis['time']
+          })
+        end
+      end
+    end
+  end
+
+  def alert_condition(threshold, old_divergence, new_divergence)
+    th, d1, d2 = threshold, old_divergence, new_divergence
+    (
+      d1 <   th && d2 >=  th ||
+      d1 >  -th && d2 <= -th ||
+      d1 >=  th && d2 <   1  ||
+      d1 <= -th && d2 >  -1
+    )
+  end
+
+  def send_alerts(scheduled_alerts)
+    scheduled_alerts.each_pair do |recipient, recipient_info|
+      recipient_info.each_pair do |subject, messages|
+        Rails.logger.info "[#{Time.now.utc}] WORKER: Sending alert '#{subject}' to '#{recipient}'."
+        AlertMailer.alert_email(recipient, subject, messages).deliver!
       end
     end
   end

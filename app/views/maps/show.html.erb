@@ -42,7 +42,7 @@
                                    <%= state ? state.time : 'still working...' %>"
                           <% end %> >
                           <% if metric %>
-                            <a href="<%= chart_url(metric) %>"
+                            <a href="<%= chart_url(metric, state ? state.time : nil) %>"
                                target="_blank"></a>
                           <% end %>
                         </td>

@@ -4,18 +4,24 @@
     <meta content='text/html; charset=UTF-8' http-equiv='Content-Type' />
   </head>
   <body>
-    <a href="<%= chart_url(@metric) %>"
-       style="background-color: <%= cell_color(@metric, @divergence) %>;
-              text-decoration: none;">
-      <div style="width: 200px;
-                  height: 200px;
-                  background-color: inherit;
-                  border: solid 1px #D0D0D0;
-                  color: #B0B0B0;">
-        <p style="margin: 175px 0 0 15px;">
-          Go to chart
-        </p>
-      </div>
-    </a>
+    <% @messages.each do |message| %>
+      <a href="<%= chart_url(message[:alert].metric, message[:time]) %>"
+         style="background-color: <%= cell_color(message[:alert].metric, message[:divergence]) %>;
+                text-decoration: none;
+                margin: 10px;">
+        <div style="width: 50px;
+                    background-color: inherit;
+                    border: solid 1px #D0D0D0;
+                    color: #B0B0B0;
+                    display: table-cell;">
+        </div>
+        <div style="padding: 0 0 0 15px;
+                    display: table-cell;
+                    color: #555555;">
+          <%= message[:alert].metric.name %><br />
+          <span style="color: #888888;"><%= message[:time] %></span>
+        </div>
+      </a>
+    <% end %>
   </body>
 </html>
