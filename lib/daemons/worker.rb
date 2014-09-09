@@ -18,7 +18,11 @@ worker = Worker.new
 Rails.logger.info "[#{Time.now.utc}] WORKER: Summoned."
 while($running) do
   Rails.logger.info "[#{Time.now.utc}] WORKER: Starting main loop."
-  worker.work
+  begin
+    worker.work
+  rescue Exception => e
+    Rails.logger.info "[#{Time.now.utc}] WORKER ERROR: #{e.inspect}"
+  end
   Rails.logger.info "[#{Time.now.utc}] WORKER: Going to sleep."
   sleep 20
 end
