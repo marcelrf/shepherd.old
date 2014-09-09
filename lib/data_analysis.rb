@@ -101,7 +101,7 @@ class DataAnalysis
     samples = []
     iterations.times do
       sample = []
-      values.size.times do
+      ((values.size / 2) + 1).times do
         # multiply random float between 0 an 1 by 0.3
         # to give more weight to recent values
         sample.push(values[((rand ** 0.3) * values.size).to_i])
