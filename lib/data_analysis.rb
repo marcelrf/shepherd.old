@@ -17,7 +17,7 @@ class DataAnalysis
       slice_gap = slice_percentiles['high'] - slice_percentiles['low']
       slice_compactness = (1.0 - slice_gap / control_gap)
       slice_trust = get_slice_trust(slice.size)
-      slice_factor = (slice_compactness * slice_trust) ** 50
+      slice_factor = (slice_compactness * slice_trust) ** 10
       # print "#{slice_factor} #{slice_compactness} #{slice_trust} #{index} #{slice_percentiles}\n"
       slice_percentiles.keys.each do |percentile|
         percentiles[percentile] += slice_percentiles[percentile] * slice_factor
@@ -64,36 +64,36 @@ class DataAnalysis
         [value, freqs[value].to_f / sample.size]
       end
       accum_freq = 0
-      percentile10 = percentile50 = percentile90 = 0
+      percentile_low = percentile_median = percentile_high = 0
       relative_freqs.each do |value, rel_freq|
         new_accum_freq = accum_freq + rel_freq
-        if accum_freq < 0.10 && new_accum_freq >= 0.10
-          percentile10 = value
+        if accum_freq < 0.05 && new_accum_freq >= 0.05
+          percentile_low = value
         end
         if accum_freq < 0.5 && new_accum_freq >= 0.5
-          percentile50 = value
+          percentile_median = value
         end
-        if accum_freq < 0.90 && new_accum_freq >= 0.90
-          percentile90 = value
+        if accum_freq < 0.95 && new_accum_freq >= 0.95
+          percentile_high = value
         end
         accum_freq = new_accum_freq
       end
-      [percentile10, percentile50, percentile90]
+      [percentile_low, percentile_median, percentile_high]
     end
     # get percentile means
-    percentile10_accum = percentile50_accum = percentile90_accum = 0
+    percentile_low_accum = percentile_median_accum = percentile_high_accum = 0
     percentiles.each do |percentile|
-      percentile10_accum += percentile[0]
-      percentile50_accum += percentile[1]
-      percentile90_accum += percentile[2]
+      percentile_low_accum += percentile[0]
+      percentile_median_accum += percentile[1]
+      percentile_high_accum += percentile[2]
     end
-    percentile10_mean = percentile10_accum.to_f / percentiles.size
-    percentile50_mean = percentile50_accum.to_f / percentiles.size
-    percentile90_mean = percentile90_accum.to_f / percentiles.size
+    percentile_low_mean = percentile_low_accum.to_f / percentiles.size
+    percentile_median_mean = percentile_median_accum.to_f / percentiles.size
+    percentile_high_mean = percentile_high_accum.to_f / percentiles.size
     {
-      'low' => percentile10_mean,
-      'median' => percentile50_mean,
-      'high' => percentile90_mean,
+      'low' => percentile_low_mean,
+      'median' => percentile_median_mean,
+      'high' => percentile_high_mean,
     }
   end
 
