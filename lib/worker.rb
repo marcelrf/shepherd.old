@@ -71,9 +71,7 @@ class Worker
     th, d1, d2 = threshold, old_divergence, new_divergence
     (
       d1 <   th && d2 >=  th ||
-      d1 >  -th && d2 <= -th ||
-      d1 >=  th && d2 <   1  ||
-      d1 <= -th && d2 >  -1
+      d1 >  -th && d2 <= -th
     )
   end
 
