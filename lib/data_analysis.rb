@@ -114,11 +114,12 @@ class DataAnalysis
   def self.get_divergence(analysis)
     m, v = analysis['median'], analysis['value']
     return 0 if m == 0
+    v = 0.000001 if v == 0 # avoid infinity when applying log
     if v >= m
       h = analysis['high']
       return 0 if h == 0
       Math.log(v / h) / Math.log(h / m) + 1
-    else
+    else # v < m
       l = analysis['low']
       return 0 if l == 0
       -(Math.log(v / l) / Math.log(l / m) + 1)
