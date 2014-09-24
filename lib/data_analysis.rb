@@ -67,13 +67,13 @@ class DataAnalysis
       percentile_low = percentile_median = percentile_high = 0
       relative_freqs.each do |value, rel_freq|
         new_accum_freq = accum_freq + rel_freq
-        if accum_freq < 0.1 && new_accum_freq >= 0.1
+        if accum_freq < 0.05 && new_accum_freq >= 0.05
           percentile_low = value
         end
         if accum_freq < 0.5 && new_accum_freq >= 0.5
           percentile_median = value
         end
-        if accum_freq < 0.9 && new_accum_freq >= 0.9
+        if accum_freq < 0.95 && new_accum_freq >= 0.95
           percentile_high = value
         end
         accum_freq = new_accum_freq
@@ -114,7 +114,7 @@ class DataAnalysis
   def self.get_divergence(analysis)
     m, v = analysis['median'], analysis['value']
     return 0 if m == 0
-    v = 0.000001 if v == 0 # avoid infinity when applying log
+    v = 0.001 if v < 0.001 # avoid infinity when applying log
     if v >= m
       h = analysis['high']
       return 0 if h == 0

@@ -22,11 +22,11 @@ module MapsHelper
     elsif divergence <= 1 && divergence >= -1
       "#FFFFFF"
     elsif divergence > 1
-      red_blue = (255 - (-1 / (((divergence - 1) / 2) ** 2 + 1) + 1) * 255).to_i.to_s(16)
+      red_blue = (255 - (-1 / (((divergence - 1) / 2) + 1) + 1) * 255).to_i.to_s(16)
       red_blue = "0#{red_blue}" if red_blue.size == 1
       "##{red_blue}FF#{red_blue}"
     else
-      green_blue = (255 - (-1 / (((-divergence - 1) / 2) ** 2 + 1) + 1) * 255).to_i.to_s(16)
+      green_blue = (255 - (-1 / (((-divergence - 1) / 2) + 1) + 1) * 255).to_i.to_s(16)
       green_blue = "0#{green_blue}" if green_blue.size == 1
       "#FF#{green_blue}#{green_blue}"
     end
