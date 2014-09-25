@@ -118,11 +118,15 @@ class DataAnalysis
     if v >= m
       h = analysis['high']
       return 0 if h == 0
-      Math.log(v / h) / Math.log(h / m) + 1
+      logarithmic = Math.log(v / h) / Math.log(h / m) + 1
+      linear = (v - m) / (h - m)
+      (logarithmic + linear) / 2.0
     else # v < m
       l = analysis['low']
       return 0 if l == 0
-      -(Math.log(v / l) / Math.log(l / m) + 1)
+      logarithmic = -(Math.log(v / l) / Math.log(l / m) + 1)
+      linear = -((v - m) / (l - m))
+      (logarithmic + linear) / 2.0
     end
   end
 
