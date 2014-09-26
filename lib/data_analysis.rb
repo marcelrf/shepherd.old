@@ -113,20 +113,19 @@ class DataAnalysis
 
   def self.get_divergence(analysis)
     m, v = analysis['median'], analysis['value']
-    return 0 if m == 0
-    v = 0.001 if v < 0.001 # avoid infinity when applying log
+    l, h = analysis['low'], analysis['high']
     if v >= m
-      h = analysis['high']
-      return 0 if h == 0
-      logarithmic = (Math.log(v / h) / Math.log(h / m) + 1) / 2.0
+      log_factor = (1 - (m - l) / (h - l)) ** 2
+      lin_factor = 1 - log_factor
+      logarithmic = Math.log(v / h) / Math.log(h / m) + 1
       linear = (v - m) / (h - m)
-      (logarithmic + linear) / 2.0
+      log_factor * logarithmic + lin_factor * linear
     else # v < m
-      l = analysis['low']
-      return 0 if l == 0
+      log_factor = (1 - (m - h) / (l - h)) ** 2
+      lin_factor = 1 - log_factor
       logarithmic = -(Math.log(v / l) / Math.log(l / m) + 1) / 2.0
       linear = -((v - m) / (l - m))
-      (logarithmic + linear) / 2.0
+      log_factor * logarithmic + lin_factor * linear
     end
   end
 

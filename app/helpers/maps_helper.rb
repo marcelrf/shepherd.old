@@ -48,7 +48,7 @@ module MapsHelper
 
   def chart_url(metric, time)
     url = "https://metrics.librato.com/metrics/#{metric.name}?duration=864000"
-    url += "&end_time=#{time.to_i}" if time
+    url += "&end_time=#{(time - 1.hour).to_i}" if time
     url
   end
 end

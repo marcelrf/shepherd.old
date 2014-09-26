@@ -4,7 +4,7 @@ class Cache
     'hour' => 2700,
     'day' => 700
   }
-  @@CHECK_DELAY = 30.minutes
+  @@CHECK_DELAY = 45.minutes
 
   def self.get_source_data(metric, period)
     now = Time.now.utc - @@CHECK_DELAY
