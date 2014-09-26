@@ -117,14 +117,22 @@ class DataAnalysis
     if v >= m
       log_factor = (1 - (m - l) / (h - l)) ** 2
       lin_factor = 1 - log_factor
-      logarithmic = Math.log(v / h) / Math.log(h / m) + 1
       linear = (v - m) / (h - m)
+      if h != 0 && m != 0 && v != 0
+        logarithmic = Math.log(v / h) / Math.log(h / m) + 1
+      else
+        logarithmic = linear
+      end
       log_factor * logarithmic + lin_factor * linear
     else # v < m
       log_factor = (1 - (m - h) / (l - h)) ** 2
       lin_factor = 1 - log_factor
-      logarithmic = -(Math.log(v / l) / Math.log(l / m) + 1) / 2.0
       linear = -((v - m) / (l - m))
+      if l != 0 && m != 0 && v != 0
+        logarithmic = -(Math.log(v / l) / Math.log(l / m) + 1) / 2.0
+      else
+        logarithmic = linear
+      end
       log_factor * logarithmic + lin_factor * linear
     end
   end
