@@ -114,6 +114,7 @@ class DataAnalysis
   def self.get_divergence(analysis)
     m, v = analysis['median'].to_f, analysis['value'].to_f
     l, h = analysis['low'].to_f, analysis['high'].to_f
+    v = 0.001 if v == 0
     divergence = nil
     if v >= m
       log_factor = (1 - (m - l) / (h - l)) ** 2
