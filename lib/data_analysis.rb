@@ -112,8 +112,8 @@ class DataAnalysis
   end
 
   def self.get_divergence(analysis)
-    m, v = analysis['median'], analysis['value']
-    l, h = analysis['low'], analysis['high']
+    m, v = analysis['median'].to_f, analysis['value'].to_f
+    l, h = analysis['low'].to_f, analysis['high'].to_f
     divergence = nil
     if v >= m
       log_factor = (1 - (m - l) / (h - l)) ** 2
@@ -124,11 +124,11 @@ class DataAnalysis
     else # v < m
       log_factor = (1 - (m - h) / (l - h)) ** 2
       lin_factor = 1 - log_factor
-      logarithmic = -(Math.log(v / l) / Math.log(l / m) + 1) / 2.0
+      logarithmic = -(Math.log(v / l) / Math.log(l / m) + 1)
       linear = -((v - m) / (l - m))
       divergence = log_factor * logarithmic + lin_factor * linear
     end
-    divergence ? divergence : 0
+    divergence.nan? ? 0 : divergence
   end
 
   def self.get_slice_trust(size)
